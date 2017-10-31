@@ -1,0 +1,15 @@
+---
+
+workdir: '/tmp/work'
+disk_path: '/var/lib/libvirt/images'
+fact_path: '/etc/ansible/facts.d'
+ssh_auth_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDOCffBjFasQkwC2/pDL5CXTiqO1s/NVPzCmx3tXspojBtAhCQZtGy9fiOXzkcZbP4I2wagq9P+hwIaPznKz9z+cd/jCG0zU7nCsyPY2RIwHO6R3Mut8VRYmUBxYRzZB8EkF8BUnyET+RFMp2zpvHulXnu5EyCvUuynSjwzKUa+7kH0wihQQk1mG1E1kP6/0hR/LZnO2ea6w2VNhRmZPBJBg6/Gvq55m/5G1rug8oUHoTGY/ePkVg0qtgErq9Zj8pZN0pxa48XsBUHqYHQUtBCFWHUf3vmWKpwgDGAHlpMxk3l816PsJ2jn9Ggk3utgdwMcb2Cz1gMZZf012gSI77lp noob@{{ inventory_hostname }}"
+
+nameserver_list:
+  - '10.33.254.2'
+  - '8.8.8.8'
+
+namesearch_list:
+  - 'mysubdom.mydomain.tld'
+
+namedomain: 'mydomain.tld'

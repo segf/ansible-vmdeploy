@@ -1,0 +1,217 @@
+---
+
+- name: Check existence of a previous instance
+  virt:
+    command: list_vms
+    name: "{{ inventory_hostname }}"
+  register: vmlist
+
+- block:
+ 
+  - name: Get instance status
+    virt:
+      command: status
+      name: "{{ inventory_hostname }}"
+    register: vmstatus1
+ 
+  - name: Destroy previously running instance
+    virt:
+      command: destroy
+      name: "{{ inventory_hostname }}"
+    register: vmstatus2
+    when: (vmstatus1 is defined) and (vmstatus1.status == 'running')
+ 
+  - name: Wait for the instance to be destroyed
+    virt:
+      command: status
+      name: "{{ inventory_hostname }}"
+    register: vmstatus2
+    until: vmstatus2.status == 'shutdown'
+    retries: 5
+    delay: 10
+    when: vmstatus1.status == 'running'
+ 
+  - name: Get instance status
+    virt:
+      command: status
+      name: "{{ inventory_hostname }}"
+    register: vmstatus1
+ 
+  - name: Undefine instance
+    virt:
+      command: undefine
+      name: "{{ inventory_hostname }}"
+    when: vmstatus1.status == 'shutdown'
+
+  when: inventory_hostname in vmlist.list_vms
+
+- name: Remove any previous files
+  file:
+    path: "{{ workdir + '/' + inventory_hostname }}"
+    state: absent
+
+- name: Create cloud-init local directory
+  file:
+    dest: "{{ workdir + '/' + inventory_hostname + '/' + 'cloud/seed/nocloud' }}"
+    mode: 0700
+    state: directory
+
+# no default route in centos, waiting patch to fix it
+# https://bugs.launchpad.net/cloud-init/+bug/1686856
+- name: Build cloud-init meta-data, user-data
+  template:
+    src: "{{ item + '.' + dist_name + '.j2' }}"
+    dest: "{{ workdir + '/' + inventory_hostname + '/cloud/seed/nocloud/' + item }}"
+    owner: root
+    group: root
+    mode: 0640
+  with_items:
+    - meta-data
+    - user-data
+
+- name: Set executable bit on user-data for cirros
+  file:
+    path: "{{ workdir + '/' + inventory_hostname + '/cloud/seed/nocloud/' + item }}"
+    mode: 0700
+  with_items:
+    - user-data
+  when: dist_name == 'cirros'
+ 
+- name: Build /etc/network/interfaces and /etc/resolv.conf for cirros
+  template:
+    src: "{{ item + '.' + dist_name + '.j2' }}"
+    dest: "{{ workdir + '/' + inventory_hostname + '/' + item }}"
+    owner: root
+    group: root
+    mode: 0640
+  with_items:
+    - interfaces
+    - resolv.conf
+  when: dist_name == 'cirros'
+
+# centos7 bug with cloud-init 0.7.9
+# does not support syntax ip/mask
+- name: Build cloud-init network-data (for recent ubuntu/debian)
+  template:
+    src: "{{ item }}.{{ dist_name }}.j2"
+    dest: "{{ workdir }}/{{ inventory_hostname }}/cloud/seed/nocloud/{{ item }}"
+    owner: root
+    group: root
+    mode: 0640
+  with_items:
+    - network-config
+  when: (dist_name == 'ubuntu') or (dist_name == 'debian')
+
+- name: Create qcow2 backend file (please wait)
+  copy:
+    src: "{{ disk_path + '/' + file_base }}"
+    dest: "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Copy cloud-init configs inside image instance
+  args:
+    executable: /bin/bash
+  shell: >
+    guestfish --rw -i copy-in -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "{{ workdir + '/' + inventory_hostname + '/cloud' }}" "/var/lib"
+
+- name: Fix /etc/network/interfaces to disable dhcp on debian
+  args:
+    executable: /bin/bash
+  shell: >
+    virt-edit -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "/etc/network/interfaces" -e 's/dhcp/manual/'
+  when: dist_name == 'debian'
+
+- name: Add NoCloud to datasource_list on debian 8
+  args:
+    executable: /bin/bash
+  shell: >
+    virt-edit -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "/etc/cloud/cloud.cfg.d/90_dpkg.cfg" -e 's/\[/\[NoCloud, /'
+  when: (dist_name == 'debian') and (dist_release == '8')
+
+- name: Enable /etc/default/resizefs in the foreground for cirros
+  args:
+    executable: /bin/bash
+  shell: >
+    virt-edit -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "/etc/default/resizefs" -e 's/disabled/foreground/'
+  when: dist_name == 'cirros'
+
+- name: Copy configs inside image instance for cirros
+  args:
+    executable: /bin/bash
+  shell: |
+    guestfish --rw -i copy-in -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "{{ workdir + '/' + inventory_hostname + '/interfaces' }}" "/etc/network"
+    guestfish --rw -i copy-in -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "{{ workdir + '/' + inventory_hostname + '/resolv.conf' }}" "/etc"
+  when: dist_name == 'cirros'
+
+- name: Get image info
+  shell: >
+    qemu-img info --output=json "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}"
+  register: result
+
+- name: Set fact requesting image properties
+  set_fact:
+    info_img: "{{ result.stdout | from_json }}"
+
+- name: Get image default virtual size
+  set_fact:
+    vsize_default: "{{ info_img['virtual-size'] | int }}" # shit happens
+
+- name: Convert virtual size image to bytes
+  set_fact:
+    vsize: "{{ disk * 1024 * 1024 * 1024 | int }}"
+
+- name: Set final image virtual size
+  set_fact:
+    vsize: "{{ vsize if vsize|int > vsize_default|int else vsize_default }}"
+
+- name: Resize image instance
+  shell: >
+    qemu-img resize /var/lib/libvirt/images/{{ inventory_hostname }}.qcow2 {{ vsize }};
+  when: vsize|int > vsize_default|int
+
+- name: Load kernel and initrd facts
+  setup:
+    fact_path: "{{ fact_path }}"
+
+- name: Update kernel and initrd vars
+  set_fact:
+    kernel_base: "{{ ansible_local[distrib].kernel_boot | basename }}"
+    initrd_base: "{{ ansible_local[distrib].initrd_boot | basename }}"
+
+- name: Set unknown os-variant for debian9 to debian8
+  set_fact:
+    distrib: 'debian8'
+  when: distrib == 'debian9'
+
+- name: Set unknown os-variant for cirros to ubuntu12.04
+  set_fact:
+    distrib: 'ubuntu12.04'
+  when: distrib == 'cirros'
+
+- name: Build virtual machine
+  shell: >
+    virt-install \
+      --import \
+      --name {{ inventory_hostname }} \
+      --vcpus {{ cpu }} \
+      --ram {{ ram }} \
+      --cpu host \
+      --hvm \
+      --virt-type kvm \
+      --os-type linux \
+      --os-variant {{ distrib }} \
+      --network bridge=br0,model=virtio {% if nic is defined and nic|int > 0 %}{% for n in range(nic) %}--network bridge=br0,model=virtio {% endfor %}{% endif %} \
+      --disk path={{ disk_path + '/' + inventory_hostname }}.qcow2,cache=none,bus=virtio \
+      --memballoon virtio \
+      --noautoconsole \
+      --boot kernel={{ disk_path + '/' + kernel_base }},initrd={{ disk_path + '/' + initrd_base }},kernel_args="{{ kernel_args }}"
+
+- name: Use kernel and initrd files provided by the image (reboot required to activate)
+  shell: |
+    xmlstarlet ed -d '/domain/os/kernel' -d '/domain/os/initrd' -d '/domain/os/cmdline' "/etc/libvirt/qemu/{{ inventory_hostname }}.xml" > "{{ workdir }}/{{ inventory_hostname }}.xml"
+    virsh undefine "{{ inventory_hostname }}"
+    virsh define "{{ workdir }}/{{ inventory_hostname }}.xml"
+  register: result
+  failed_when: result.rc != 0

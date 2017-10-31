@@ -1,0 +1,132 @@
+---
+
+- hosts: all
+  gather_facts: yes
+
+  tasks:
+
+  - name: Convert distrib to lower case
+    set_fact:
+      distrib: "{{ distrib|lower }}"
+
+  - name: Set dist_name and dist_release for ubuntu family
+    set_fact:
+      dist_name: "{{ distrib[:6] }}"
+      dist_release: "{{ distrib[6:] }}"
+    when: "'ubuntu' in distrib"
+
+  - name: Set dist_name and dist_release for centos family
+    set_fact:
+      dist_name: "{{ distrib[:6] }}"
+      dist_release: "{{ distrib[6] }}"
+    when: "'centos' in distrib"
+
+  - name: Set dist_name and dist_release for debian family
+    set_fact:
+      dist_name: "{{ distrib[:6] }}"
+      dist_release: "{{ distrib[6] }}"
+    when: "'debian' in distrib"
+
+  - name: Fail if distrib matches cirros
+    fail:
+      msg: "cirros does not support ansible"
+    when: "'cirros' in distrib"
+ 
+  - name: Set network parameters
+    set_fact:
+      inv_ip: "{{ ip | ipv4('address') }}"
+      inv_network: "{{ ip | ipv4('network') }}"
+      inv_netmask: "{{ ip | ipv4('netmask') }}"
+      inv_gw: "{{ gw | ipv4('address') }}"
+      inv_nic: "{{ nic|d()|int + 2 }}"
+
+# Distrib
+  - name: Checking distribution
+    assert:
+      that:
+        - "ansible_distribution|lower == dist_name"
+        - "ansible_distribution_major_version == dist_release[:2]"
+
+# Network
+  - name: Checking network
+    assert:
+      that:
+        - "ansible_default_ipv4.interface == 'eth0'"
+        - "ansible_default_ipv4.address == inv_ip"
+        - "ansible_default_ipv4.netmask == inv_netmask"
+        - "ansible_default_ipv4.network == inv_network"
+        - "ansible_default_ipv4.gateway == inv_gw"
+        - "ansible_interfaces|count == inv_nic|int"
+
+# VM
+  - name: Checking domain cpu info
+    connection: local
+    shell: >
+      virsh dominfo {{ inventory_hostname }} | grep '^CPU(s):' | awk '{ print $2 }'
+    register: result
+    failed_when: result.stdout|int != cpu
+    changed_when: False
+
+  - name: Checking domain memory info
+    connection: local
+    shell: >
+      virsh dominfo {{ inventory_hostname }} | grep '^Max memory:' | awk '{ print $3 }'
+    register: result
+    failed_when: result.stdout|int != (ram * 1024)
+    changed_when: False
+
+  - name: Checking domain disk info
+    connection: local
+    shell: >
+      virsh domblkinfo {{ inventory_hostname }} vda | grep '^Capacity:' | awk '{ print $2 }'
+    register: result
+    failed_when: result.stdout|int != (disk * 1024 * 1024 * 1024)
+    changed_when: False
+
+# DNS
+  - name: Checking nameserver list
+    shell: >
+      echo "$(grep '^nameserver' /etc/resolv.conf | awk '{ print $2 }' | tr '\n' ' ' | sed 's/ $//' | sort)";
+    register: dns_list
+    failed_when: dns_list.stdout != nameserver_list|sort|join(' ')
+    changed_when: False
+
+  - name: Checking namesearch list
+    shell: >
+      echo "$(grep '^search' /etc/resolv.conf | cut -d' ' -f2- | sed 's/ $//g' | sort)";
+    register: dns_search_list
+    failed_when: dns_search_list.stdout !=  namesearch_list|sort|join(' ')
+    changed_when: False
+
+# User
+  - name: Checking user
+    getent:
+      database: passwd
+      key: nadmin
+    failed_when: getent_passwd['nadmin'] != [ 'x', '1000', '1000', 'Noob Admin', '/home/nadmin', '/bin/bash' ]
+    changed_when: False
+
+  - name: Checking group
+    getent:
+      database: group
+      key: nadmin
+    failed_when: getent_group['nadmin'] != [ 'x', '1000', '' ]
+    changed_when: False
+
+  - name: Checking user's ssh key
+    shell: >
+       grep -Fxq "{{ ssh_auth_key }}" '/home/nadmin/.ssh/authorized_keys';
+    register: user_key
+    failed_when: user_key.rc != 0
+    changed_when: False
+
+# System
+  - name: Checking hostname
+    command: hostname
+    register: result
+    failed_when: result.stdout != inventory_hostname
+    changed_when: False
+
+  - debug:
+      var: hostvars[inventory_hostname]
+    when: debug is defined

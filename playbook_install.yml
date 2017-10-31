@@ -1,0 +1,165 @@
+---
+
+- hosts: all
+  gather_facts: no
+  connection: local
+
+  tasks:
+
+  - name: Create working directory
+    file:
+      dest: "{{ workdir }}"
+      mode: 0700
+      state: directory
+    run_once: true
+    tags:
+      - always
+
+  - name: Convert distrib to lower case
+    set_fact:
+      distrib: "{{ distrib|lower }}"
+    tags:
+      - always
+
+  - name: Set dist_name and dist_release for ubuntu family
+    set_fact:
+      dist_name: "{{ distrib[:6] }}"
+      dist_release: "{{ distrib[6:] }}"
+    when: "'ubuntu' in distrib"
+    tags:
+      - always
+
+  - name: Set dist_name and dist_release for centos family
+    set_fact:
+      dist_name: "{{ distrib[:6] }}"
+      dist_release: "{{ distrib[6] }}"
+    when: "'centos' in distrib"
+    tags:
+      - always
+
+  - name: Set dist_name and dist_release for debian family
+    set_fact:
+      dist_name: "{{ distrib[:6] }}"
+      dist_release: "{{ distrib[6] }}"
+    when: "'debian' in distrib"
+    tags:
+      - always
+
+# no release, use always last version
+  - name: Set dist_name and dist_release for cirros family
+    set_fact:
+      dist_name: "{{ distrib }}"
+      dist_release: ""
+    when: "'cirros' in distrib"
+    tags:
+      - always
+
+  - name: group by OS
+    group_by: key={{ dist_name }}{{ dist_release }}
+    changed_when: false
+    tags:
+      - always
+
+  - name: Get latest metadata version for cirros
+    get_url:
+      url: "{{ image.url_base + '/' + image.file_version }}"
+      dest: "{{ workdir + '/' + dist_name + '-cirros_version' }}"
+      force: yes
+    when: "'cirros' in distrib"
+    tags:
+      - always
+
+  - name: Set dist_release fact for cirros
+    set_fact:
+      dist_release: "{{ lookup('file', workdir + '/' + dist_name + '-cirros_version') }}"
+    when: "'cirros' in distrib"
+    tags:
+      - always
+
+  - name: Set facts from OS group
+    set_fact:
+      url_base: "{{ image.url_base }}"
+      file_base: "{{ image.file_base }}"
+      file_version: "{{ image.file_version | d() }}"
+      checksum_file: "{{ image.checksum_file }}"
+      signature_file: "{{ image.signature_file | d() }}"
+      gpg_key_id: "{{ image.gpg_key_id | d() | replace(' ','') }}"
+      gpg_file: "{{ image.gpg_file | d() }}"
+      key_server: "{{ image.key_server | d() }}"
+      kernel_args: "{{ image.kernel_args }}"
+    tags:
+      - always
+
+- hosts: ubuntu14.04
+  gather_facts: no
+  connection: local
+
+  roles:
+
+    - role: setup
+      tags: setup
+
+- hosts: ubuntu16.04
+  gather_facts: no
+  connection: local
+
+  roles:
+
+    - role: setup
+      tags: setup
+
+- hosts: centos7
+  gather_facts: no
+  connection: local
+
+  roles:
+
+    - role: setup
+      tags: setup
+
+- hosts: debian8
+  gather_facts: no
+  connection: local
+
+  roles:
+
+    - role: setup
+      tags: setup
+
+- hosts: debian9
+  gather_facts: no
+  connection: local
+
+  roles:
+
+    - role: setup
+      tags: setup
+
+- hosts: cirros
+  gather_facts: no
+  connection: local
+
+  roles:
+
+    - role: setup
+      tags: setup
+
+- hosts: all
+  gather_facts: no
+  connection: local
+
+  roles:
+
+    - role: bootstrap
+      tags: bootstrap
+
+  tasks:
+
+  - name: Remove working directory
+    file:
+      dest: "{{ workdir }}"
+      state: absent
+    when: debug is not defined
+    run_once: true
+    tags:
+      - always

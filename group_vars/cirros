@@ -1,0 +1,11 @@
+---
+
+image:
+  url_base: "http://download.cirros-cloud.net"
+
+  file_base: "cirros-{{ dist_release }}-x86_64-disk.img"
+  file_version: "version/released"
+
+  checksum_file: 'MD5SUMS'
+
+  kernel_args: 'root=/dev/vda1 net.ifnames=0 biosdevname=0 ipv6.disable=1 ds=nocloud'

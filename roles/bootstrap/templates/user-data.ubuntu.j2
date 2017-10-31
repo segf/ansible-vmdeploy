@@ -1,0 +1,38 @@
+#cloud-config
+# vim: syntax=yaml
+#
+groups:
+  - nadmin
+
+users:
+  - name: nadmin
+    shell: /bin/bash
+    gecos: "Noob Admin"
+    primary-group: nadmin
+    groups: sudo
+    lock_passwd: true
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    ssh_authorized_keys:
+      - "{{ ssh_auth_key }}"
+
+{% if debug is defined %}
+chpasswd:
+  list: |
+    root:root
+    nadmin:nadmin
+  expire: False
+{% endif %}
+
+growpart:
+  mode: auto
+  devices: ['/']
+  ignore_growroot_disabled: false
+
+{% if not dist_release == '14.04' %}
+packages:
+  - python-minimal
+{% endif %}
+
+runcmd:
+# works on cloud-init >= v0.7.7
+  - 'touch /etc/cloud/cloud-init.disabled'

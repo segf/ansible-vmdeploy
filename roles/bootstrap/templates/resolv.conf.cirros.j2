@@ -1,0 +1,15 @@
+{% if namedomain is defined %}
+domain {{ namedomain }}
+{% endif %}
+{% if namesearch_list is defined %}
+search {{ namedomain }} {% for name in namesearch_list %}{{ name }}{% if not loop.last %} {% endif %}{% endfor %}
+{% endif %}
+
+{% if nameserver_list is defined %}
+{% for ip in nameserver_list %}
+nameserver {{ ip }}
+{% endfor %}
+options:
+ rotate: true
+ timeout: 1
+{% endif %}

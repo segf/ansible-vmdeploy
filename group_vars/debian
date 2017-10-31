@@ -1,0 +1,13 @@
+---
+
+image:
+  url_base: "https://cdimage.debian.org/cdimage/openstack/current-{{ dist_release }}"
+  file_base: "debian-{{ dist_release }}-openstack-amd64.qcow2"
+
+  checksum_file: 'SHA256SUMS'
+  signature_file: 'SHA256SUMS.sign'
+
+  gpg_key_id: 'DF9B 9C49 EAA9 2984 3258 9D76 DA87 E80D 6294 BE9B'
+  key_server: 'hkp://keyring.debian.org'
+
+  kernel_args: 'root=/dev/vda1 net.ifnames=0 biosdevname=0 ipv6.disable=1 ds=nocloud'

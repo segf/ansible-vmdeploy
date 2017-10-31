@@ -1,0 +1,36 @@
+#
+# Inventory example
+#
+vm1     ansible_host=10.33.254.111 cpu=1 ram=512 disk=5 ip=10.33.254.111/24 gw=10.33.254.1 distrib=ubuntu16.04
+vm2     ansible_host=10.33.254.112 cpu=2 ram=768 disk=5 ip=10.33.254.112/24 gw=10.33.254.1 distrib=ubuntu16.04 nic=1
+vm3     ansible_host=10.33.254.113 cpu=2 ram=512 disk=7 ip=10.33.254.113/24 gw=10.33.254.1 distrib=debian8
+vm4     ansible_host=10.33.254.114 cpu=2 ram=512 disk=8 ip=10.33.254.114/24 gw=10.33.254.1 distrib=centos7.0
+vm5     ansible_host=10.33.254.115 cpu=1 ram=512 disk=5 ip=10.33.254.115/24 gw=10.33.254.1 distrib=cirros
+vm6     ansible_host=10.33.254.116 cpu=2 ram=512 disk=8 ip=10.33.254.116/24 gw=10.33.254.1 distrib=debian9
+vm7     ansible_host=10.33.254.117 cpu=1 ram=1024 disk=7 ip=10.33.254.117/24 gw=10.33.254.1 distrib=ubuntu14.04
+
+[all:vars]
+ansible_user=nadmin
+
+# groups of groups declaration
+[ubuntu]
+[ubuntu14.04]
+[ubuntu16.04]
+
+[debian]
+[debian8]
+[debian9]
+
+[centos]
+[centos7]
+
+[ubuntu:children]
+ubuntu14.04
+ubuntu16.04
+
+[debian:children]
+debian8
+debian9
+
+[centos:children]
+centos7

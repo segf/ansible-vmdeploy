@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# I am not proud of this
+
+umask 0277
+sed -i 's#cirros#nadmin#g' /etc/passwd /etc/shadow /etc/group /etc/sudoers.d/90-cirros-user
+
+mv -f /home/cirros /home/nadmin
+mkdir -p /home/nadmin/.ssh
+echo '{{ ssh_auth_key }}' > /home/nadmin/.ssh/authorized_keys
+chown nadmin:nadmin /home/nadmin/.ssh/authorized_keys
+
+exit 0

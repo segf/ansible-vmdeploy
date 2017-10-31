@@ -1,0 +1,11 @@
+# Configure Loopback
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+  address {{ ip | ipv4('address') }}
+  network {{ ip | ipv4('network') }}
+  netmask {{ ip | ipv4('netmask') }}
+  broadcast {{ ip | ipv4('broadcast') }}
+  gateway {{ gw | ipv4('address') }}

@@ -1,0 +1,27 @@
+#jinja2:keep_trailing_newline: True, lstrip_blocks: True, trim_blocks: False
+#cloud-config
+#
+version: 1
+config:
+  - type: physical
+    name: eth0
+    mtu: 1500
+    subnets:
+      - type: static
+        ipv4: true
+        control: auto
+        address: {{ ip | ipv4 }}
+        gateway: {{ gw | ipv4 }}
+{%- if nameserver_list is defined %}
+  - type: nameserver
+    address:
+  {%- for ip in nameserver_list %}
+      - {{ ip }}
+  {%- endfor %}
+  {%- if namesearch_list is defined %}
+    search:
+    {%- for name in namesearch_list %}
+      - {{ name }}
+    {%- endfor %}
+  {%- endif %}
+{%- endif %}

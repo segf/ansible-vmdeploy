@@ -1,0 +1,14 @@
+---
+
+image:
+  url_base: "https://cloud.centos.org/centos/{{ dist_release }}/images"
+  file_base: "CentOS-{{ dist_release }}-x86_64-GenericCloud.qcow2"
+
+  checksum_file: 'sha256sum.txt'
+  signature_file: 'sha256sum.txt.asc'
+  
+  gpg_file: 'http://mirror.centos.org/centos/RPM-GPG-KEY-CentOS-{{ dist_release }}'
+  gpg_key_id: '6341 AB27 53D7 8A78 A7C2 7BB1 24C6 A8A7 F4A8 0EB5'
+  key_server: 'hkp://pool.sks-keyservers.net'
+
+  kernel_args: 'root=/dev/vda1 net.ifnames=0 biosdevname=0 ipv6.disable=1 ds=nocloud'

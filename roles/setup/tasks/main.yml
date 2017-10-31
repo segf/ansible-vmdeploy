@@ -1,0 +1,3 @@
+---
+
+- include: "{{ dist_name }}.yml"
