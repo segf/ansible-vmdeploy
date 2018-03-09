@@ -220,6 +220,7 @@
       --vcpus {{ cpu }} \
       --ram {{ ram }} \
       --cpu host \
+      --machine pc \
       --hvm \
       --virt-type kvm \
       --os-type linux \
