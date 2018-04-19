@@ -73,7 +73,7 @@ Ansible deps
 - libvirt-python
 
 The virt module is buggy. The playbook fails randomly.
-See https://github.com/ansible/ansible/issues/2790
+See https://github.com/ansible/ansible/issues/27905
 I could use shell commands instead but I am lazy. Also, this module
 is currently under active rewrite.
 
