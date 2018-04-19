@@ -18,7 +18,7 @@ Features
 - build with virt-install.
 - extract kernel and initrd files from image to boot in kernel context.
 - provide root access to user (via sudo and ssh key).
-
+- allow deployment on remote compute.
 
 Inputs
 ------
@@ -28,7 +28,7 @@ Inputs
 - static ip/dns with one network interface (eth0 ipv4 only).
 - user + ssh key
 - additional interfaces allowed.
-
+- remote KVM host.
 
 Problems
 --------
@@ -65,8 +65,7 @@ xmlstarlet
 >**Notes**
 - On centos, you need to install the epel-release package first to get xmlstarlet.
 - If you want to use virt-manager as console, remember to install xauth.
-- Currently, the same host is used for configuration and hypervisor.
-  Patches are welcome to delegate playbook execution ;)
+- On remote deployment, you have to provide an account which is member of the 'libvirt' group.
 
 Ansible deps
 ------------

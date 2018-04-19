@@ -4,6 +4,7 @@
   virt:
     command: list_vms
     name: "{{ inventory_hostname }}"
+    uri: "{{ libvirt_uri }}"
   register: vmlist
 
 - block:
@@ -12,12 +13,14 @@
     virt:
       command: status
       name: "{{ inventory_hostname }}"
+      uri: "{{ libvirt_uri }}"
     register: vmstatus1
  
   - name: Destroy previously running instance
     virt:
       command: destroy
       name: "{{ inventory_hostname }}"
+      uri: "{{ libvirt_uri }}"
     register: vmstatus2
     when: (vmstatus1 is defined) and (vmstatus1.status == 'running')
  
@@ -25,6 +28,7 @@
     virt:
       command: status
       name: "{{ inventory_hostname }}"
+      uri: "{{ libvirt_uri }}"
     register: vmstatus2
     until: vmstatus2.status == 'shutdown'
     retries: 5
@@ -35,12 +39,14 @@
     virt:
       command: status
       name: "{{ inventory_hostname }}"
+      uri: "{{ libvirt_uri }}"
     register: vmstatus1
  
   - name: Undefine instance
     virt:
       command: undefine
       name: "{{ inventory_hostname }}"
+      uri: "{{ libvirt_uri }}"
     when: vmstatus1.status == 'shutdown'
 
   when: inventory_hostname in vmlist.list_vms
@@ -190,7 +196,23 @@
     distrib: 'ubuntu12.04'
   when: distrib == 'cirros'
 
-- name: Build virtual machine
+- name: Copy Qcow, kernel and initrd files to remote host
+  remote_user: "{{ hypervisor_user }}"
+  become: True
+  copy:
+    src: "{{ disk_path + '/' + item }}"
+    dest: "{{ disk_path + '/' + item }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - "{{ inventory_hostname + '.qcow2' }}"
+    - "{{ kernel_base }}"
+    - "{{ initrd_base }}"
+  delegate_to: "{{ hypervisor }}"
+  when: libvirt_remote == True
+
+- name: Build XML virtual machine
   shell: >
     virt-install \
       --import \
@@ -198,6 +220,7 @@
       --vcpus {{ cpu }} \
       --ram {{ ram }} \
       --cpu host \
+      --machine pc \
       --hvm \
       --virt-type kvm \
       --os-type linux \
@@ -206,12 +229,45 @@
       --disk path={{ disk_path + '/' + inventory_hostname }}.qcow2,cache=none,bus=virtio \
       --memballoon virtio \
       --noautoconsole \
-      --boot kernel={{ disk_path + '/' + kernel_base }},initrd={{ disk_path + '/' + initrd_base }},kernel_args="{{ kernel_args }}"
+      --boot kernel={{ disk_path + '/' + kernel_base }},initrd={{ disk_path + '/' + initrd_base }},kernel_args="{{ kernel_args }}" \
+      --print-xml > "{{ workdir + '/' + inventory_hostname }}.xml"
 
-- name: Use kernel and initrd files provided by the image (reboot required to activate)
+- name: Define instance from XML
+  virt:
+    command: define
+    name: "{{ inventory_hostname }}"
+    xml: "{{ lookup('file', '{{ workdir }}/{{ inventory_hostname }}.xml') }}"
+    uri: "{{ libvirt_uri }}"
+
+- name: Boot up instance
+  virt:
+    name: "{{ inventory_hostname }}"
+    state: running
+    uri: "{{ libvirt_uri }}"
+
+- name: Remove kernel and initrd files provided by the image from XML definition
+  remote_user: "{{ hypervisor_user }}"
+  become: True
   shell: |
-    xmlstarlet ed -d '/domain/os/kernel' -d '/domain/os/initrd' -d '/domain/os/cmdline' "/etc/libvirt/qemu/{{ inventory_hostname }}.xml" > "{{ workdir }}/{{ inventory_hostname }}.xml"
-    virsh undefine "{{ inventory_hostname }}"
-    virsh define "{{ workdir }}/{{ inventory_hostname }}.xml"
+    xmlstarlet ed --inplace -d '/domain/os/kernel' -d '/domain/os/initrd' -d '/domain/os/cmdline' "{{ workdir + '/' + inventory_hostname }}.xml"
+  register: result
+  failed_when: result.rc != 0
+
+- name: Update XML definition on the hypervisor
+  remote_user: "{{ hypervisor_user }}"
+  become: True
+  copy:
+    src: "{{ workdir + '/' + inventory_hostname }}.xml"
+    dest: "/etc/libvirt/qemu/{{ inventory_hostname }}.xml"
+    owner: root
+    group: root
+    mode: 0600
+  delegate_to: "{{ hypervisor }}"
+
+# Cannot update XML via the virt module
+# Apply define once instance running
+- name: Apply updated XML definition
+  shell: |
+    virsh --connect {{ libvirt_uri }} define "{{ workdir + '/' + inventory_hostname }}.xml"
   register: result
   failed_when: result.rc != 0

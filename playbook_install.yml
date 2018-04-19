@@ -54,6 +54,31 @@
     tags:
       - always
 
+  - name: Set hypervisor to localhost when undefined
+    set_fact:
+      hypervisor: "localhost"
+    when: (hypervisor is not defined) or (hypervisor == '')
+    tags:
+      - always
+
+# local: virsh --connect qemu:///system list
+# remote: virsh --connect qemu+ssh://user@host/system list
+  - name: Set default libvirt uri
+    set_fact:
+      libvirt_uri: "qemu:///system"
+      libvirt_remote: False
+    tags:
+      - always
+
+  - name: Set libvirt uri
+    set_fact:
+      libvirt_uri: "qemu+ssh://{{ hypervisor_user }}@{{ hypervisor }}/system"
+      libvirt_remote: True
+    when:
+      - "hypervisor not in [ '127.0.0.1', 'localhost', inventory_hostname ]"
+    tags:
+      - always
+
   - name: group by OS
     group_by: key={{ dist_name }}{{ dist_release }}
     changed_when: false

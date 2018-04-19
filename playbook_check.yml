@@ -32,6 +32,21 @@
       msg: "cirros does not support ansible"
     when: "'cirros' in distrib"
  
+  - name: Set hypervisor to localhost when undefined
+    set_fact:
+      hypervisor: "localhost"
+    when: (hypervisor is not defined) or (hypervisor == '')
+
+  - name: Set default libvirt uri
+    set_fact:
+      libvirt_uri: "qemu:///system"
+
+  - name: Set libvirt uri
+    set_fact:
+      libvirt_uri: "qemu+ssh://{{ hypervisor_user }}@{{ hypervisor }}/system"
+    when:
+      - "hypervisor not in [ '127.0.0.1', 'localhost', inventory_hostname ]"
+
   - name: Set network parameters
     set_fact:
       inv_ip: "{{ ip | ipv4('address') }}"
@@ -62,7 +77,7 @@
   - name: Checking domain cpu info
     connection: local
     shell: >
-      virsh dominfo {{ inventory_hostname }} | grep '^CPU(s):' | awk '{ print $2 }'
+      virsh --connect {{ libvirt_uri }} dominfo {{ inventory_hostname }} | grep '^CPU(s):' | awk '{ print $2 }'
     register: result
     failed_when: result.stdout|int != cpu
     changed_when: False
@@ -70,7 +85,7 @@
   - name: Checking domain memory info
     connection: local
     shell: >
-      virsh dominfo {{ inventory_hostname }} | grep '^Max memory:' | awk '{ print $3 }'
+      virsh --connect {{ libvirt_uri }} dominfo {{ inventory_hostname }} | grep '^Max memory:' | awk '{ print $3 }'
     register: result
     failed_when: result.stdout|int != (ram * 1024)
     changed_when: False
@@ -78,7 +93,7 @@
   - name: Checking domain disk info
     connection: local
     shell: >
-      virsh domblkinfo {{ inventory_hostname }} vda | grep '^Capacity:' | awk '{ print $2 }'
+      virsh --connect {{ libvirt_uri }} domblkinfo {{ inventory_hostname }} vda | grep '^Capacity:' | awk '{ print $2 }'
     register: result
     failed_when: result.stdout|int != (disk * 1024 * 1024 * 1024)
     changed_when: False
