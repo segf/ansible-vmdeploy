@@ -164,9 +164,23 @@
   set_fact:
     vsize_default: "{{ info_img['virtual-size'] | int }}" # shit happens
 
+- name: Set disk_root, disk_supp, disk_cnt when disk is not unique
+  set_fact:
+    disk_root: "{{ disk|first|int }}"
+    disk_supp: "{{ disk[1:] }}"
+    disk_cnt: "{{ disk[1:] | count }}"
+  when: not disk is number
+
+- name: Set disk_root when disk is a unique number
+  set_fact:
+    disk_root: "{{ disk|int }}"
+    disk_supp: []
+    disk_cnt: 0
+  when: disk is number
+
 - name: Convert virtual size image to bytes
   set_fact:
-    vsize: "{{ disk * 1024 * 1024 * 1024 | int }}"
+    vsize: "{{ disk_root|int * 1024|pow(3) | int }}"
 
 - name: Set final image virtual size
   set_fact:
@@ -212,6 +226,29 @@
   delegate_to: "{{ hypervisor }}"
   when: libvirt_remote == True
 
+- name: Delete previously defined additional disks
+  remote_user: "{{ hypervisor_user }}"
+  become: True
+  file:
+    path: "{{ disk_path + '/' + inventory_hostname + '-disk%s'|format(idx+1) + '.img' }}"
+    state: absent
+  loop: "{{ disk_supp }}"
+  loop_control:
+    index_var: idx
+  delegate_to: "{{ hypervisor }}"
+  when: disk_cnt is defined and disk_cnt > 1
+
+- name: Create additional disks if required
+  remote_user: "{{ hypervisor_user }}"
+  become: True
+  shell: >
+    qemu-img create -f raw "{{ disk_path + '/' + inventory_hostname + '-disk%s'|format(idx+1) + '.img' }}" {{ item }}G
+  loop: "{{ disk_supp }}"
+  loop_control:
+    index_var: idx
+  delegate_to: "{{ hypervisor }}"
+  when: disk_cnt is defined and disk_cnt > 1
+
 - name: Build XML virtual machine
   shell: >
     virt-install \
@@ -227,6 +264,9 @@
       --os-variant {{ distrib }} \
       --network bridge=br0,model=virtio {% if nic is defined and nic|int > 0 %}{% for n in range(nic) %}--network bridge=br0,model=virtio {% endfor %}{% endif %} \
       --disk path={{ disk_path + '/' + inventory_hostname }}.qcow2,cache=none,bus=virtio \
+    {% for d in disk_supp -%}
+      --disk path={{ disk_path + '/' + inventory_hostname + '-disk%s'|format(loop.index) + '.img' }},cache=none,bus=virtio \
+    {% endfor %}
       --memballoon virtio \
       --noautoconsole \
       --boot kernel={{ disk_path + '/' + kernel_base }},initrd={{ disk_path + '/' + initrd_base }},kernel_args="{{ kernel_args }}" \
