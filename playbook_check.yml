@@ -90,12 +90,48 @@
     failed_when: result.stdout|int != (ram * 1024)
     changed_when: False
 
-  - name: Checking domain disk info
+  - name: convert disk to int when disk is a string
+    set_fact:
+      disk_root: "{{ disk|first|int }}"
+      disk_cnt: "{{ disk | count }}"
+    when: not disk is number
+
+  - name: convert disk to int when disk is a number
+    set_fact:
+      disk_root: "{{ disk|int }}"
+      disk_cnt: 1
+    when: disk is number
+
+  - name: List disk devices by name
     connection: local
     shell: >
-      virsh --connect {{ libvirt_uri }} domblkinfo {{ inventory_hostname }} vda | grep '^Capacity:' | awk '{ print $2 }'
+      virsh --connect {{ libvirt_uri }} domblklist {{ inventory_hostname }} | sed '1,2 d' | sed '$ d' | awk '{ print $1 }'
+    register: device_list
+    changed_when: False
+
+  - name: Checking the number of disk device
+    assert:
+      that:
+        - device_list.stdout_lines|count == disk_cnt|int
+
+  - name: Checking domain root disk info
+    connection: local
+    shell: >
+      virsh --connect {{ libvirt_uri }} domblkinfo {{ inventory_hostname }} {{ device_list.stdout_lines[0] }} | grep '^Capacity:' | awk '{ print $2 }'
     register: result
-    failed_when: result.stdout|int != (disk * 1024 * 1024 * 1024)
+    failed_when: result.stdout|int != ( disk_root|int * 1024|pow(3)|int)
+    changed_when: False
+
+  - name: Checking domain additional disks info
+    connection: local
+    shell: >
+      virsh --connect {{ libvirt_uri }} domblkinfo {{ inventory_hostname }} {{ item }} | grep '^Capacity:' | awk '{ print $2 }'
+    register: result
+    loop: "{{ device_list.stdout_lines }}"
+    loop_control:
+      index_var: idx
+    failed_when: result.stdout|int != ( disk[idx]|int * 1024|pow(3)|int)
+    when: disk_cnt > 1
     changed_when: False
 
 # DNS
