@@ -124,9 +124,10 @@
 
 - name: Lookup kernel and initrd files from image
   shell: >
-    virt-cat -a "{{ disk_path + '/' + file_base }}" /boot/grub/menu.lst | grep -E 'kernel|initrd' | awk '{ print $1" "$2 }' | sort | uniq | awk '{ print $2 }'
+    guestfish --ro -a "{{ disk_path + '/' + file_base }}" -i cat /boot/grub/menu.lst | grep -E 'kernel|initrd' | awk '{ print $1" "$2 }' | sort | uniq | awk '{ print $2 }'
   register: result
   when: new_update == True
+  failed_when: result.stdout == ""
   run_once: True
 
 - name: Register kernel and initrd files vars
@@ -149,7 +150,6 @@
   shell: >
     guestfish --ro -i copy-out -a "{{ disk_path + '/' + file_base }}" "{{ kernel_boot }}" "{{ initrd_boot }}" "{{ disk_path }}"
   when: new_update == True
-  failed_when: result.stdout == ""
   run_once: True
 
 - name: Set perms on kernel and initrd files
