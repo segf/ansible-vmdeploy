@@ -1,8 +1,5 @@
 {% set local_facts = {} %}
-{% set _ = local_facts.update ({ "kernel_boot": kernel_boot }) %}
 {% set _ = local_facts.update ({ "kernel_path": kernel_path }) %}
-{% set _ = local_facts.update ({ "kernel_base": kernel_base }) %}
-{% set _ = local_facts.update ({ "initrd_boot": initrd_boot }) %}
 {% set _ = local_facts.update ({ "initrd_path": initrd_path }) %}
-{% set _ = local_facts.update ({ "initrd_base": initrd_base }) %}
+{% set _ = local_facts.update ({ "disk_vsize": disk_vsize_default }) %}
 {{ local_facts | to_nice_json }}

@@ -193,12 +193,13 @@
 
 - name: Load kernel and initrd facts
   setup:
+    filter: ansible_local
     fact_path: "{{ fact_path }}"
 
 - name: Update kernel and initrd vars
   set_fact:
-    kernel_base: "{{ ansible_local[distrib].kernel_boot | basename }}"
-    initrd_base: "{{ ansible_local[distrib].initrd_boot | basename }}"
+    kernel_base: "{{ ansible_local[distrib].kernel_path | basename }}"
+    initrd_base: "{{ ansible_local[distrib].initrd_path | basename }}"
 
 - name: Set unknown os-variant for debian9 to debian8
   set_fact:
