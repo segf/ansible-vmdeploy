@@ -27,6 +27,11 @@
       dist_release: "{{ distrib[6] }}"
     when: "'debian' in distrib"
 
+  - name: Adjust namesearch_list for centos
+    set_fact:
+      namesearch_list: "{{ namesearch_list + [ namedomain ] }}"
+    when: "'centos' in distrib"
+
   - name: Fail if distrib matches cirros
     fail:
       msg: "cirros does not support ansible"
