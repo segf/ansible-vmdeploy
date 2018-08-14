@@ -55,6 +55,16 @@
       inv_gw: "{{ gw | ipv4('address') }}"
       inv_nic: "{{ nic|d()|int + 2 }}"
 
+  - name: Load ansible local facts
+    connection: local
+    setup:
+      filter: ansible_local
+      fact_path: "{{ fact_path }}"
+
+  - name: Set disk_vsize fact from local facts
+    set_fact:
+      disk_vsize: "{{ ansible_local[distrib].disk_vsize }}"
+
 # Distrib
   - name: Checking distribution
     assert:
@@ -90,17 +100,21 @@
     failed_when: result.stdout|int != (ram * 1024)
     changed_when: False
 
-  - name: convert disk to int when disk is a string
+  - name: Convert disk to int when disk is a string
     set_fact:
-      disk_root: "{{ disk|first|int }}"
+      disk_root: "{{ disk|first|int * 1024|pow(3)|int }}"
       disk_cnt: "{{ disk | count }}"
     when: not disk is number
 
-  - name: convert disk to int when disk is a number
+  - name: Convert disk to int when disk is a number
     set_fact:
-      disk_root: "{{ disk|int }}"
+      disk_root: "{{ disk|int * 1024|pow(3)|int }}"
       disk_cnt: 1
     when: disk is number
+
+  - name: Set disk_root to min value if required
+    set_fact:
+      disk_root: "{{ disk_root if disk_root|int > disk_vsize|int else disk_vsize }}"
 
   - name: List disk devices by name
     connection: local
@@ -119,7 +133,7 @@
     shell: >
       virsh --connect {{ libvirt_uri }} domblkinfo {{ inventory_hostname }} {{ device_list.stdout_lines[0] }} | grep '^Capacity:' | awk '{ print $2 }'
     register: result
-    failed_when: result.stdout|int != ( disk_root|int * 1024|pow(3)|int)
+    failed_when: result.stdout|int != disk_root|int
     changed_when: False
 
   - name: Checking domain additional disks info
@@ -127,10 +141,10 @@
     shell: >
       virsh --connect {{ libvirt_uri }} domblkinfo {{ inventory_hostname }} {{ item }} | grep '^Capacity:' | awk '{ print $2 }'
     register: result
-    loop: "{{ device_list.stdout_lines }}"
+    loop: "{{ device_list.stdout_lines[1:] }}"
     loop_control:
       index_var: idx
-    failed_when: result.stdout|int != ( disk[idx]|int * 1024|pow(3)|int)
+    failed_when: result.stdout|int != ( disk[idx+1]|int * 1024|pow(3)|int)
     when: disk_cnt > 1
     changed_when: False
 
