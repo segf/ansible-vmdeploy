@@ -76,7 +76,8 @@
 
   - name: Set dist_release fact for cirros
     set_fact:
-      dist_release: "{{ lookup('file', workdir + '/' + dist_name + '-cirros_version') }}"
+#      dist_release: "{{ lookup('file', workdir + '/' + dist_name + '-cirros_version') }}"
+      dist_release: "0.3.5"
     when: "'cirros' in distrib"
 
   - name: Set facts from OS group
