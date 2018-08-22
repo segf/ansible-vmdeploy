@@ -44,12 +44,9 @@ The playbook attempts to fix bugs and provides missing features.
 Tested on
 ---------
 
-* ubuntu16.04 with own packages: ansible:2.0.0.2, python:2.7.12
-* centos7.3 with own packages: ansible:2.3.2.0, python:2.7.5
-
-with a standard bridge br0 on the hypervisor and no nat.
-See also virt-install in the bootstrap role.
-
+* ubuntu16.04 with PPA packages: ansible:2.6.3, python:2.7.12
+    use: add-apt-repository ppa:ansible/ansible-2.6
+* centos7.5 with own packages: ansible:2.6.2, python:2.7.5
 
 Programs requirements
 ---------------------
@@ -67,10 +64,17 @@ xmlstarlet
 - If you want to use virt-manager as console, remember to install xauth.
 - On remote deployment, you have to provide an account which is member of the 'libvirt' group.
 
+Create the facts directory:
+mkdir /etc/ansible/facts.d
+
+Add a standard bridge br0 on the hypervisor and no nat.
+See also virt-install in the bootstrap role.
+
 Ansible deps
 ------------
 
 - libvirt-python
+- python-netaddr
 
 The virt module is buggy. The playbook fails randomly.
 See https://github.com/ansible/ansible/issues/27905
@@ -105,6 +109,11 @@ debug=1 :
 tags:
 - setup : download image and all related stuff.
 - bootstrap : build instance and launch it.
+
+
+ansible-playbook -i inventory playbook_install.yml -e update_facts=1
+
+Update facts about distrib if removed.
 ```
 
 To check deployment
