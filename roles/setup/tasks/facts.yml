@@ -1,0 +1,70 @@
+---
+
+- name: Lookup kernel and initrd files from image for centos
+  shell: >
+    guestfish --ro -a "{{ disk_path + '/' + file_base }}" -i cat /boot/grub/menu.lst | grep -E 'kernel|initrd' | awk '{ print $1" "$2 }' | sort | uniq | awk '{ print $2 }'
+  register: result
+  failed_when: result.stdout == ""
+  changed_when: False
+  when: "'centos' in distrib"
+
+- name: Set fact result_kernel
+  set_fact:
+    result_kernel: "{{ result }}"
+
+- name: Lookup kernel and initrd files from image for others
+  shell: >
+    guestfish --ro -a "{{ disk_path + '/' + file_base }}" -i readlinklist / 'vmlinuz initrd.img' | sort | awk '{ print "/" $0 }'
+  register: result
+  failed_when: result.stdout == ""
+  changed_when: False
+  when: "'centos' not in distrib"
+
+# Strange behaviour
+# https://github.com/ansible/ansible/issues/4297
+- name: Set fact result_kernel
+  set_fact:
+    result_kernel: "{{ result }}"
+  when: result is not skipped
+
+- name: Register kernel and initrd files vars
+  set_fact:
+    kernel_path: "{{ result_kernel.stdout_lines[1] }}"
+    initrd_path: "{{ result_kernel.stdout_lines[0] }}"
+
+- name: Extract kernel and initrd files from image
+  shell: >
+    guestfish --ro -a "{{ disk_path + '/' + file_base }}" -i copy-out "{{ kernel_path }}" "{{ initrd_path }}" "{{ disk_path }}"
+  changed_when: False
+
+- name: Set perms on kernel and initrd files
+  file:
+    path: "{{ disk_path + '/' + item }}"
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  with_items:
+    - "{{ kernel_path | basename }}"
+    - "{{ initrd_path | basename }}"
+
+- name: Get image info
+  shell: >
+    qemu-img info --output=json "{{ disk_path + '/' + file_base }}"
+  register: result
+  changed_when: False
+
+- name: Set fact requesting image properties
+  set_fact:
+    info_img: "{{ result.stdout | from_json }}"
+
+- name: Get image default virtual size
+  set_fact:
+    disk_vsize_default: "{{ info_img['virtual-size'] | int }}" # shit happens
+
+- name: Save kernel, initrd, disk_size facts
+  template:
+    src: 'distrib.fact.j2'
+    dest: "{{ fact_path + '/' + distrib }}.fact"
+    owner: 'root'
+    group: 'root'
+    mode: '0644'

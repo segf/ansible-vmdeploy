@@ -1,0 +1,54 @@
+---
+
+- name: Download remote checksum (sha256) file
+  get_url:
+    url: "{{ url_base + '/' + item }}"
+    dest: "{{ workdir + '/' + dist_name + dist_release + '-' + item }}"
+    force: yes
+  with_items:
+    - '{{ signature_file }}'
+    - '{{ checksum_file }}'
+
+- name: Lookup remote checksum (sha256)
+  shell: >
+    grep -E "{{ file_base }}$" "{{ workdir + '/' + dist_name + dist_release + '-' + checksum_file }}" | awk '{ print $1 }';
+  register: remote_checksum
+  failed_when: remote_checksum.stdout == ""
+  changed_when: False
+
+- name: Import gpg key id
+  shell: >
+    gpg --homedir "{{ workdir }}" --keyserver "{{ key_server }}" --recv-keys "{{ gpg_key_id }}"
+  register: result
+  changed_when: "result.stderr|search('imported:')"
+
+- name: Check signature
+  shell: >
+    gpg --home "{{ workdir }}" --verify "{{ workdir + '/' + dist_name + dist_release + '-' + signature_file }}" "{{ workdir + '/' + dist_name + dist_release + '-' + checksum_file }}"
+  register: signature
+  changed_when: False
+  failed_when: signature.rc != 0
+
+- name: Compute checksum (sha256) from local image
+  stat:
+    path: "{{ disk_path + '/' + file_base }}"
+    checksum_algorithm: sha256
+    get_md5: False
+  register: local_img
+
+- name: Set update_image fact if image not found
+  set_fact:
+    update_image: True
+  when: local_img.stat.exists == False
+
+- name: Check if an updated image is required
+  set_fact:
+    update_image: "{{ (local_img.stat.checksum != remote_checksum.stdout) | bool }}"
+  when: local_img.stat.exists == True
+
+- name: Download cloud image (please wait)
+  get_url:
+    url: "{{ url_base + '/' + file_base }}"
+    dest: "{{ disk_path + '/' + file_base }}"
+    checksum: sha256:{{ remote_checksum.stdout }}
+    force: "{{ update_image }}"

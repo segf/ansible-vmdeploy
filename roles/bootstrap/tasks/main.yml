@@ -51,6 +51,16 @@
 
   when: inventory_hostname in vmlist.list_vms
 
+- name: Load kernel and initrd facts
+  setup:
+    filter: ansible_local
+    fact_path: "{{ fact_path }}"
+
+- name: Update kernel and initrd vars
+  set_fact:
+    kernel_base: "{{ ansible_local[distrib].kernel_path | basename }}"
+    initrd_base: "{{ ansible_local[distrib].initrd_path | basename }}"
+
 - name: Remove any previous files
   file:
     path: "{{ workdir + '/' + inventory_hostname }}"
@@ -190,15 +200,6 @@
   shell: >
     qemu-img resize /var/lib/libvirt/images/{{ inventory_hostname }}.qcow2 {{ vsize }};
   when: vsize|int > vsize_default|int
-
-- name: Load kernel and initrd facts
-  setup:
-    fact_path: "{{ fact_path }}"
-
-- name: Update kernel and initrd vars
-  set_fact:
-    kernel_base: "{{ ansible_local[distrib].kernel_boot | basename }}"
-    initrd_base: "{{ ansible_local[distrib].initrd_boot | basename }}"
 
 - name: Set unknown os-variant for debian9 to debian8
   set_fact:

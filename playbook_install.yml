@@ -3,6 +3,8 @@
 - hosts: all
   gather_facts: no
   connection: local
+  tags:
+    - always
 
   tasks:
 
@@ -11,39 +13,29 @@
       dest: "{{ workdir }}"
       mode: 0700
       state: directory
-    run_once: true
-    tags:
-      - always
+    run_once: True
 
   - name: Convert distrib to lower case
     set_fact:
       distrib: "{{ distrib|lower }}"
-    tags:
-      - always
 
   - name: Set dist_name and dist_release for ubuntu family
     set_fact:
       dist_name: "{{ distrib[:6] }}"
       dist_release: "{{ distrib[6:] }}"
     when: "'ubuntu' in distrib"
-    tags:
-      - always
 
   - name: Set dist_name and dist_release for centos family
     set_fact:
       dist_name: "{{ distrib[:6] }}"
       dist_release: "{{ distrib[6] }}"
     when: "'centos' in distrib"
-    tags:
-      - always
 
   - name: Set dist_name and dist_release for debian family
     set_fact:
       dist_name: "{{ distrib[:6] }}"
       dist_release: "{{ distrib[6] }}"
     when: "'debian' in distrib"
-    tags:
-      - always
 
 # no release, use always last version
   - name: Set dist_name and dist_release for cirros family
@@ -51,15 +43,11 @@
       dist_name: "{{ distrib }}"
       dist_release: ""
     when: "'cirros' in distrib"
-    tags:
-      - always
 
   - name: Set hypervisor to localhost when undefined
     set_fact:
       hypervisor: "localhost"
     when: (hypervisor is not defined) or (hypervisor == '')
-    tags:
-      - always
 
 # local: virsh --connect qemu:///system list
 # remote: virsh --connect qemu+ssh://user@host/system list
@@ -67,8 +55,6 @@
     set_fact:
       libvirt_uri: "qemu:///system"
       libvirt_remote: False
-    tags:
-      - always
 
   - name: Set libvirt uri
     set_fact:
@@ -76,14 +62,10 @@
       libvirt_remote: True
     when:
       - "hypervisor not in [ '127.0.0.1', 'localhost', inventory_hostname ]"
-    tags:
-      - always
 
   - name: group by OS
     group_by: key={{ dist_name }}{{ dist_release }}
-    changed_when: false
-    tags:
-      - always
+    changed_when: False
 
   - name: Get latest metadata version for cirros
     get_url:
@@ -91,15 +73,12 @@
       dest: "{{ workdir + '/' + dist_name + '-cirros_version' }}"
       force: yes
     when: "'cirros' in distrib"
-    tags:
-      - always
 
   - name: Set dist_release fact for cirros
     set_fact:
-      dist_release: "{{ lookup('file', workdir + '/' + dist_name + '-cirros_version') }}"
+#      dist_release: "{{ lookup('file', workdir + '/' + dist_name + '-cirros_version') }}"
+      dist_release: "0.3.5"
     when: "'cirros' in distrib"
-    tags:
-      - always
 
   - name: Set facts from OS group
     set_fact:
@@ -112,79 +91,107 @@
       gpg_file: "{{ image.gpg_file | d() }}"
       key_server: "{{ image.key_server | d() }}"
       kernel_args: "{{ image.kernel_args }}"
-    tags:
-      - always
+
+  - name: Set fact update_image to default value
+    set_fact:
+      update_image: False
 
 - hosts: ubuntu14.04
   gather_facts: no
   connection: local
+  run_once: True
+  tags:
+    - setup
 
-  roles:
+  tasks:
 
-    - role: setup
-      tags: setup
+  - name: Include role setup
+    include_role:
+      name: setup
 
 - hosts: ubuntu16.04
   gather_facts: no
   connection: local
+  run_once: True
+  tags:
+    - setup
 
-  roles:
+  tasks:
 
-    - role: setup
-      tags: setup
+  - name: Include role setup
+    include_role:
+      name: setup
 
 - hosts: centos7
   gather_facts: no
   connection: local
+  run_once: True
+  tags:
+    - setup
 
-  roles:
+  tasks:
 
-    - role: setup
-      tags: setup
+  - name: Include role setup
+    include_role:
+      name: setup
 
 - hosts: debian8
   gather_facts: no
   connection: local
+  run_once: True
+  tags:
+    - setup
 
-  roles:
+  tasks:
 
-    - role: setup
-      tags: setup
+  - name: Include role setup
+    include_role:
+      name: setup
 
 - hosts: debian9
   gather_facts: no
   connection: local
+  run_once: True
+  tags:
+    - setup
 
-  roles:
+  tasks:
 
-    - role: setup
-      tags: setup
+  - name: Include role setup
+    include_role:
+      name: setup
 
 - hosts: cirros
   gather_facts: no
   connection: local
+  run_once: True
+  tags:
+    - setup
 
-  roles:
+  tasks:
 
-    - role: setup
-      tags: setup
+  - name: Include role setup
+    include_role:
+      name: setup
 
 - hosts: all
   gather_facts: no
   connection: local
-
-  roles:
-
-    - role: bootstrap
-      tags: bootstrap
+  tags:
+    - bootstrap
 
   tasks:
+
+  - name: Include role bootstrap
+    include_role:
+      name: bootstrap
+    when: update_facts is not defined
 
   - name: Remove working directory
     file:
       dest: "{{ workdir }}"
       state: absent
     when: debug is not defined
-    run_once: true
+    run_once: True
     tags:
       - always

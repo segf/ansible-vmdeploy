@@ -1,0 +1,70 @@
+---
+
+- name: Download remote checksum (sha256) file
+  get_url:
+    url: "{{ url_base + '/' + item }}"
+    dest: "{{ workdir + '/' + dist_name + dist_release + '-' + item }}"
+    force: yes
+  with_items:
+    - '{{ signature_file }}'
+    - '{{ checksum_file }}'
+
+- name: Lookup remote checksum (sha256)
+  shell: >
+    cd "{{ workdir }}";
+    file=$(grep -E  'qcow2.xz$' "{{ dist_name + dist_release + '-' + checksum_file }}" | awk 'END { print $2 }');
+    grep "${file}" "{{ workdir + '/' + dist_name + dist_release + '-' + checksum_file }}" | awk '{ print $1 }';
+  register: remote_checksum
+  failed_when: remote_checksum.stdout == ""
+  changed_when: False
+
+- name: Import gpg key id
+  shell: >
+    gpg --homedir "{{ workdir }}" --keyserver "{{ key_server }}" --fetch-keys "{{ gpg_file }}"
+  register: result
+  changed_when: "result.stderr|search('imported:')"
+
+- name: Check signature
+  shell: >
+    gpg --home "{{ workdir }}" --verify "{{ workdir + '/' + dist_name + dist_release + '-' + signature_file }}"
+  register: signature
+  changed_when: False
+  failed_when: signature.rc != 0
+
+- name: Compute checksum (sha256) from local image
+  stat:
+    path: "{{ disk_path + '/' + file_base + '.xz' }}"
+    checksum_algorithm: sha256
+    get_md5: False
+  register: local_img
+
+- name: Set update_image fact if image not found
+  set_fact:
+    update_image: True
+  when: local_img.stat.exists == False
+
+- name: Check if an updated image is required
+  set_fact:
+    update_image: "{{ (local_img.stat.checksum != remote_checksum.stdout) | bool }}"
+  when: local_img.stat.exists == True
+
+- name: Download cloud image (please wait)
+  get_url:
+    url: "{{ url_base + '/' + file_base + '.xz' }}"
+    dest: "{{ disk_path + '/' + file_base + '.xz' }}"
+    checksum: sha256:{{ remote_checksum.stdout }}
+    force: "{{ update_image }}"
+
+- name: Delete old cloud image
+  file:
+    path: "{{ disk_path + '/' + file_base }}"
+    state: absent
+  when: update_image == True
+
+- name: Uncompress cloud image (please wait)
+  shell: >
+    cd "{{ disk_path }}";
+    xz --keep --decompress "{{ disk_path + '/' + file_base + '.xz' }}";
+  register: result
+  failed_when: result.rc != 0
+  when: update_image == True

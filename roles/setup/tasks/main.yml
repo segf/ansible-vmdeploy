@@ -1,3 +1,6 @@
 ---
 
-- include: "{{ dist_name }}.yml"
+- include_tasks: "{{ 'image-' + dist_name }}.yml"
+
+- include_tasks: "facts.yml"
+  when: update_facts is defined or update_image
