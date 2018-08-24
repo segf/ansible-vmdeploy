@@ -1,3 +1,4 @@
+#jinja2:keep_trailing_newline: True, lstrip_blocks: True, trim_blocks: False
 #cloud-config
 # vim: syntax=yaml
 #
@@ -30,29 +31,35 @@ growpart:
   devices: ['/']
   ignore_growroot_disabled: false
 
+# underscore
+manage_resolv_conf: true
+
+resolv_conf:
+{%- if namedomain is defined %}
+  domain: {{ namedomain }}
+{%- endif %}
+{%- if namesearch_list is defined %}
+  searchdomains: {{ namesearch_list | to_json }}
+{%- endif %}
+{%- if nameserver_list is defined %}
+  nameservers: {{ nameserver_list | to_json }}
+{%- endif %}
+  options:
+    rotate: true
+    timeout: 1
+
 bootcmd:
   - 'userdel -r debian; groupdel debian'
   - 'rm /etc/sudoers.d/debian-cloud-init'
 
 runcmd:
-{% if dist_release == '8' %}
-{# bugfix, ifup too early  #}
+{%- if dist_release == '8' -%}
+{# bugfix, ifup too early #}
   - 'ifdown eth0; sleep 1s; ifup eth0'
 {# no working method to disable cloud-init #}
-{#  - 'systemctl mask cloud-final.service cloud-config.service cloud-init.service cloud-init-local.service'#}
-{% endif %}
+{#  - 'systemctl mask cloud-final.service cloud-config.service cloud-init.service cloud-init-local.service' #}
+{%- endif -%}
 {# works on cloud-init >= v0.7.7 #}
-{% if dist_release == '9' %}
+{%- if dist_release == '9' %}
   - 'touch /etc/cloud/cloud-init.disabled'
-{% endif %}
-  - 'echo "
-{%- if namedomain is defined %}
-domain {{ namedomain }}\n
-{%- endif %}
-{% if namesearch_list is defined %}
-search {% for name in namesearch_list %}{{ name }}{% if not loop.last %} {% endif %}{% endfor %}\n
-{%- endif %}
-{% if nameserver_list is defined %}
-  {%- for ip in nameserver_list %}nameserver {{ ip }}\n{% endfor %}
-options:\n rotate: true\n timeout: 1\n
-{%- endif %}" > /etc/resolv.conf'
+{% endif -%}
