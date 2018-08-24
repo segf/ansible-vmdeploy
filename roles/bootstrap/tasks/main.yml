@@ -102,7 +102,6 @@
     mode: 0640
   with_items:
     - interfaces
-    - resolv.conf
   when: dist_name == 'cirros'
 
 # centos7 bug with cloud-init 0.7.9
@@ -132,11 +131,12 @@
   shell: >
     guestfish --rw -i copy-in -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "{{ workdir + '/' + inventory_hostname + '/cloud' }}" "/var/lib"
 
-- name: Fix /etc/network/interfaces to disable dhcp on debian
+- name: Fix /etc/network/interfaces to disable dhcp and build resolv.conf on debian
   args:
     executable: /bin/bash
-  shell: >
+  shell: |
     virt-edit -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "/etc/network/interfaces" -e 's/dhcp/manual/'
+    virt-edit -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "/etc/cloud/cloud.cfg" -e 's/update_etc_hosts/update_etc_hosts\n - resolv_conf/'
   when: dist_name == 'debian'
 
 - name: Add NoCloud to datasource_list on debian 8
