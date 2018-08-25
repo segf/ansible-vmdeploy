@@ -24,8 +24,8 @@
 - name: Compute checksum (md5) from local image
   stat:
     path: "{{ disk_path + '/' + file_base }}"
-    get_checksum: False
-    get_md5: True
+    get_checksum: True
+    checksum_algorithm: md5
   register: local_img
 
 - name: Set update_image fact if image not found
@@ -35,7 +35,7 @@
 
 - name: Check if an updated image is required
   set_fact:
-    update_image: "{{ (local_img.stat.md5 != remote_checksum.stdout) | bool }}"
+    update_image: "{{ (local_img.stat.checksum != remote_checksum.stdout) | bool }}"
   when: local_img.stat.exists == True
 
 - name: Download cloud image (please wait)
