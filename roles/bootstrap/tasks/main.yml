@@ -102,6 +102,7 @@
     mode: 0640
   with_items:
     - interfaces
+    - resolv.conf
   when: dist_name == 'cirros'
 
 # centos7 bug with cloud-init 0.7.9
