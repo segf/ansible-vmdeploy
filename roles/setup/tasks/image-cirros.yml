@@ -4,12 +4,14 @@
   get_url:
     url: "{{ url_base + '/' + file_version }}"
     dest: "{{ workdir + '/' + dist_name + '-cirros_version' }}"
+    tmp_dest: '/tmp'
     force: yes
 
 - name: Download remote checksum (md5) file
   get_url:
     url: "{{ url_base + '/' + dist_release + '/' + item }}"
     dest: "{{ workdir + '/' + dist_name + '-' + item }}"
+    tmp_dest: '/tmp'
     force: yes
   with_items:
     - '{{ checksum_file }}'
@@ -42,5 +44,6 @@
   get_url:
     url: "{{ url_base + '/' + dist_release + '/' + file_base }}"
     dest: "{{ disk_path + '/' + file_base }}"
+    tmp_dest: '/tmp'
     checksum: md5:{{ remote_checksum.stdout }}
     force: "{{ update_image }}"
