@@ -218,9 +218,7 @@
   copy:
     src: "{{ disk_path + '/' + item }}"
     dest: "{{ disk_path + '/' + item }}"
-    owner: root
-    group: root
-    mode: 0644
+    force: True
   with_items:
     - "{{ inventory_hostname + '.qcow2' }}"
     - "{{ kernel_base }}"
