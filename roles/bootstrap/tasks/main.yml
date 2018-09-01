@@ -252,6 +252,7 @@
 - name: Build XML virtual machine
   shell: >
     virt-install \
+      --connect {{ libvirt_uri }} \
       --import \
       --name {{ inventory_hostname }} \
       --vcpus {{ cpu }} \
@@ -269,45 +270,13 @@
     {% endfor %}
       --memballoon virtio \
       --noautoconsole \
-      --boot kernel={{ disk_path + '/' + kernel_base }},initrd={{ disk_path + '/' + initrd_base }},kernel_args="{{ kernel_args }}" \
-      --print-xml > "{{ workdir + '/' + inventory_hostname }}.xml"
-
-- name: Define instance from XML
-  virt:
-    command: define
-    name: "{{ inventory_hostname }}"
-    xml: "{{ lookup('file', '{{ workdir }}/{{ inventory_hostname }}.xml') }}"
-    uri: "{{ libvirt_uri }}"
-
-- name: Boot up instance
-  virt:
-    name: "{{ inventory_hostname }}"
-    state: running
-    uri: "{{ libvirt_uri }}"
+      --boot kernel={{ disk_path + '/' + kernel_base }},initrd={{ disk_path + '/' + initrd_base }},kernel_args="{{ kernel_args }}"
 
 - name: Remove kernel and initrd files provided by the image from XML definition
   remote_user: "{{ hypervisor_user }}"
   become: True
   shell: |
-    xmlstarlet ed --inplace -d '/domain/os/kernel' -d '/domain/os/initrd' -d '/domain/os/cmdline' "{{ workdir + '/' + inventory_hostname }}.xml"
+    xmlstarlet ed --inplace -d '/domain/os/kernel' -d '/domain/os/initrd' -d '/domain/os/cmdline' "{{ '/etc/libvirt/qemu' + '/' + inventory_hostname }}.xml"
   register: result
   failed_when: result.rc != 0
-
-- name: Update XML definition on the hypervisor
-  remote_user: "{{ hypervisor_user }}"
-  become: True
-  copy:
-    src: "{{ workdir + '/' + inventory_hostname }}.xml"
-    dest: "/etc/libvirt/qemu/{{ inventory_hostname }}.xml"
-    owner: root
-    group: root
-    mode: 0600
   delegate_to: "{{ hypervisor }}"
-
-# Cannot update XML via the virt module
-# Apply define once instance running
-- name: Apply updated XML definition
-  shell: |
-    virsh --connect {{ libvirt_uri }} define "{{ workdir + '/' + inventory_hostname }}.xml"
-  register: result
-  failed_when: result.rc != 0
