@@ -4,6 +4,7 @@
   get_url:
     url: "{{ url_base + '/' + item }}"
     dest: "{{ workdir + '/' + dist_name + dist_release + '-' + item }}"
+    tmp_dest: '/tmp'
     force: yes
   with_items:
     - '{{ signature_file }}'
@@ -50,5 +51,6 @@
   get_url:
     url: "{{ url_base + '/' + file_base }}"
     dest: "{{ disk_path + '/' + file_base }}"
+    tmp_dest: '/tmp'
     checksum: sha256:{{ remote_checksum.stdout }}
     force: "{{ update_image }}"
