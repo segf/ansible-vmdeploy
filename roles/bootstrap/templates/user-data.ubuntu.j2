@@ -36,3 +36,6 @@ packages:
 runcmd:
 # works on cloud-init >= v0.7.7
   - 'touch /etc/cloud/cloud-init.disabled'
+{% if dist_release == '18.04' %}
+  - 'ln -sf /run/systemd/resolve/resolv.conf /etc/'
+{% endif %}
