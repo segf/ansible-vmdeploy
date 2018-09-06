@@ -212,6 +212,11 @@
     distrib: 'ubuntu12.04'
   when: distrib == 'cirros'
 
+- name: Set unknown os-variant for ubuntu18.04 to ubuntu16.04
+  set_fact:
+    distrib: 'ubuntu16.04'
+  when: distrib == 'ubuntu18.04'
+
 - name: Copy Qcow, kernel and initrd files to remote host
   remote_user: "{{ hypervisor_user }}"
   become: True
