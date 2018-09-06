@@ -122,6 +122,19 @@
     include_role:
       name: setup
 
+- hosts: ubuntu18.04
+  gather_facts: no
+  connection: local
+  run_once: True
+  tags:
+    - setup
+
+  tasks:
+
+  - name: Include role setup
+    include_role:
+      name: setup
+
 - hosts: centos7
   gather_facts: no
   connection: local
