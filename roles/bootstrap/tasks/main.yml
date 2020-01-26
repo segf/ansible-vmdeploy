@@ -285,3 +285,13 @@
   register: result
   failed_when: result.rc != 0
   delegate_to: "{{ hypervisor }}"
+
+- name: ... and define VM
+  remote_user: "{{ hypervisor_user }}"
+  become: True
+  shell: |
+    virsh define "{{ '/etc/libvirt/qemu' + '/' + inventory_hostname }}.xml"
+  register: result
+  failed_when: result.rc != 0
+  delegate_to: "{{ hypervisor }}"
+-
