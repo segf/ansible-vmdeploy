@@ -44,9 +44,9 @@ The playbook attempts to fix bugs and provides missing features.
 Tested on
 ---------
 
-* ubuntu16.04 with PPA packages: ansible:2.6.3, python:2.7.12
-    use: add-apt-repository ppa:ansible/ansible-2.6
-* centos7.5 with own packages: ansible:2.6.2, python:2.7.5
+* ubuntu16.04 with PPA packages: ansible:2.9.4, python:2.7.12
+    use: add-apt-repository ppa:ansible/ansible-2.9
+* centos7.7 with own packages: ansible:2.9.4, python:2.7.5
 
 Programs requirements
 ---------------------

@@ -21,7 +21,7 @@
   shell: >
     gpg --homedir "{{ workdir }}" --keyserver "{{ key_server }}" --recv-keys "{{ gpg_key_id }}"
   register: result
-  changed_when: "result.stderr|search('imported:')"
+  changed_when: "result.stderr is search('imported:')"
 
 - name: Check signature
   shell: >
