@@ -16,8 +16,9 @@ hypervisor_user=kvmuser
 
 # groups of groups declaration
 [ubuntu]
-[ubuntu14.04]
-[ubuntu16.04]
+[ubuntu1404]
+[ubuntu1604]
+[ubuntu1804]
 
 [debian]
 [debian8]
@@ -27,8 +28,8 @@ hypervisor_user=kvmuser
 [centos7]
 
 [ubuntu:children]
-ubuntu14.04
-ubuntu16.04
+ubuntu1404
+ubuntu1604
 
 [debian:children]
 debian8

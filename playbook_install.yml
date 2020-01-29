@@ -64,7 +64,7 @@
       - "hypervisor not in [ '127.0.0.1', 'localhost', inventory_hostname ]"
 
   - name: group by OS
-    group_by: key={{ dist_name }}{{ dist_release }}
+    group_by: key={{ dist_name }}{{ dist_release | replace('.', '') }}
     changed_when: False
 
   - name: Get latest metadata version for cirros
@@ -92,7 +92,7 @@
       key_server: "{{ image.key_server | d() }}"
       kernel_args: "{{ image.kernel_args }}"
 
-  - name: Adjust file_base fact for group ubuntu18.04
+  - name: Adjust file_base fact for group ubuntu1804
     set_fact:
       file_base: "ubuntu-{{ dist_release }}-server-cloudimg-amd64.img"
     when: distrib == 'ubuntu18.04'
@@ -101,7 +101,7 @@
     set_fact:
       update_image: False
 
-- hosts: ubuntu14.04
+- hosts: ubuntu1404
   gather_facts: no
   connection: local
   run_once: True
@@ -114,7 +114,7 @@
     include_role:
       name: setup
 
-- hosts: ubuntu16.04
+- hosts: ubuntu1604
   gather_facts: no
   connection: local
   run_once: True
@@ -127,7 +127,7 @@
     include_role:
       name: setup
 
-- hosts: ubuntu18.04
+- hosts: ubuntu1804
   gather_facts: no
   connection: local
   run_once: True
