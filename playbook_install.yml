@@ -121,6 +121,14 @@
       file_base: "ubuntu-{{ dist_release }}.04-server-cloudimg-amd64.img"
     when: distrib == 'ubuntu18'
 
+  - name: Adjust vars for group centos8
+    set_fact:
+      url_base: "https://cloud.centos.org/centos/{{ dist_release }}/x86_64/images"
+      gpg_file: "http://mirror.centos.org/centos/RPM-GPG-KEY-CentOS-Official"
+      checksum_file: "CHECKSUM"
+      signature_file: "CHECKSUM.asc"
+    when: distrib == 'centos8'
+
   - name: Set fact update_image to default value
     set_fact:
       update_image: False
@@ -165,6 +173,19 @@
       name: setup
 
 - hosts: centos7
+  gather_facts: no
+  connection: local
+  run_once: True
+  tags:
+    - setup
+
+  tasks:
+
+  - name: Include role setup
+    include_role:
+      name: setup
+
+- hosts: centos8
   gather_facts: no
   connection: local
   run_once: True

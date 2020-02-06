@@ -10,7 +10,24 @@
     - '{{ signature_file }}'
     - '{{ checksum_file }}'
 
-- name: Lookup remote checksum (sha256)
+- name: Set vars for centos8
+  shell: >
+    grep '^SHA256 (CentOS-8-GenericCloud' "{{ workdir + '/' + dist_name + dist_release + '-' + checksum_file }}" | \
+    sed -r -e 's#^SHA256\ \((CentOS-8-GenericCloud.*)\)\ =\ (.*)$#\1#g'
+  register: result
+  when: dist_release == '8'
+
+- name: Set file_base for centos8
+  set_fact:
+    file_base: "{{ result.stdout }}"
+  when: dist_release == '8'
+
+- name: Set base_file for centos8
+  set_fact:
+    base_file: "{{ result.stdout }}"
+  when: dist_release == '8'
+
+- name: Lookup remote checksum (sha256) for centos7
   shell: >
     cd "{{ workdir }}";
     file=$(grep -E  'qcow2.xz$' "{{ dist_name + dist_release + '-' + checksum_file }}" | awk 'END { print $2 }');
@@ -18,6 +35,17 @@
   register: remote_checksum
   failed_when: remote_checksum.stdout == ""
   changed_when: False
+  when: dist_release == '7'
+
+- name: Lookup remote checksum (sha256) for centos8
+  shell: >
+    cd "{{ workdir }}";
+    grep '^SHA256 (CentOS-8-GenericCloud' "{{ workdir + '/' + dist_name + dist_release + '-' + checksum_file }}" | \
+    sed -r -e 's#^SHA256\ \(CentOS-8-GenericCloud(.*)\)\ =\ (.*)#\2#g'
+  register: remote_checksum
+  failed_when: remote_checksum.stdout == ""
+  changed_when: False
+  when: dist_release == '8'
 
 - name: Import gpg key id
   shell: >
@@ -32,9 +60,13 @@
   changed_when: False
   failed_when: signature.rc != 0
 
+- name: Set file extension
+  set_fact:
+    ext: "{{ (distrib == 'centos7') | ternary('.xz','') }}"
+
 - name: Compute checksum (sha256) from local image
   stat:
-    path: "{{ disk_path + '/' + file_base + '.xz' }}"
+    path: "{{ disk_path + '/' + file_base + ext }}"
     checksum_algorithm: sha256
     get_md5: False
   register: local_img
@@ -51,8 +83,8 @@
 
 - name: Download cloud image (please wait)
   get_url:
-    url: "{{ url_base + '/' + file_base + '.xz' }}"
-    dest: "{{ disk_path + '/' + file_base + '.xz' }}"
+    url: "{{ url_base + '/' + file_base + ext }}"
+    dest: "{{ disk_path + '/' + file_base + ext }}"
     tmp_dest: '/tmp'
     checksum: sha256:{{ remote_checksum.stdout }}
     force: "{{ update_image }}"
@@ -61,12 +93,16 @@
   file:
     path: "{{ disk_path + '/' + file_base }}"
     state: absent
-  when: update_image == True
+  when:
+    - dist_release == '7'
+    - update_image == True
 
 - name: Uncompress cloud image (please wait)
   shell: >
     cd "{{ disk_path }}";
-    xz --keep --decompress "{{ disk_path + '/' + file_base + '.xz' }}";
+    xz --keep --decompress "{{ disk_path + '/' + file_base + ext }}";
   register: result
   failed_when: result.rc != 0
-  when: update_image == True
+  when:
+    - dist_release == '7'
+    - update_image == True
