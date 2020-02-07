@@ -1,8 +1,8 @@
 ---
 
 image:
-  url_base: "https://cloud-images.ubuntu.com/releases/server/{{ dist_release }}/release"
-  file_base: "ubuntu-{{ dist_release }}-server-cloudimg-amd64-disk1.img"
+  url_base: "https://cloud-images.ubuntu.com/releases/server/{{ dist_release }}.04/release"
+  file_base: "ubuntu-{{ dist_release }}.04-server-cloudimg-amd64-disk1.img"
 
   checksum_file: 'SHA256SUMS'
   signature_file: 'SHA256SUMS.gpg'

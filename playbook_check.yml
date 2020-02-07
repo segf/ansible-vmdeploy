@@ -75,7 +75,7 @@
     assert:
       that:
         - "ansible_distribution|lower == dist_name"
-        - "ansible_distribution_major_version == dist_release[:2]"
+        - "ansible_distribution_major_version == dist_release"
 
 # Network
   - name: Checking network

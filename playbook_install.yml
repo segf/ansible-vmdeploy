@@ -25,16 +25,34 @@
       dist_release: "{{ distrib[6:] }}"
     when: "'ubuntu' in distrib"
 
+  - name: Set os_vendor and os_version for ubuntu family
+    set_fact:
+      os_vendor: "Canonical Ltd"
+      os_version: "{{ dist_release }}.04"
+    when: "'ubuntu' in distrib"
+
   - name: Set dist_name and dist_release for centos family
     set_fact:
       dist_name: "{{ distrib[:6] }}"
       dist_release: "{{ distrib[6] }}"
     when: "'centos' in distrib"
 
+  - name: Set os_vendor and os_version for centos family
+    set_fact:
+      os_vendor: "CentOS"
+      os_version: "{{ dist_release }}.0"
+    when: "'centos' in distrib"
+
   - name: Set dist_name and dist_release for debian family
     set_fact:
       dist_name: "{{ distrib[:6] }}"
-      dist_release: "{{ distrib[6] }}"
+      dist_release: "{{ distrib[6:] }}"
+    when: "'debian' in distrib"
+
+  - name: Set os_vendor and os_version for debian family
+    set_fact:
+      os_vendor: "Debian Project"
+      os_version: "{{ dist_release }}"
     when: "'debian' in distrib"
 
 # no release, use always last version
@@ -42,6 +60,12 @@
     set_fact:
       dist_name: "{{ distrib }}"
       dist_release: ""
+    when: "'cirros' in distrib"
+
+  - name: Set os_vendor and os_version for cirros family
+    set_fact:
+      os_vendor: "CirrOS"
+      os_version: "{{ dist_release }}"
     when: "'cirros' in distrib"
 
   - name: Set hypervisor to localhost when undefined
@@ -64,7 +88,7 @@
       - "hypervisor not in [ '127.0.0.1', 'localhost', inventory_hostname ]"
 
   - name: group by OS
-    group_by: key={{ dist_name }}{{ dist_release | replace('.', '') }}
+    group_by: key={{ dist_name }}{{ dist_release }}
     changed_when: False
 
   - name: Get latest metadata version for cirros
@@ -92,16 +116,16 @@
       key_server: "{{ image.key_server | d() }}"
       kernel_args: "{{ image.kernel_args }}"
 
-  - name: Adjust file_base fact for group ubuntu1804
+  - name: Adjust file_base fact for group ubuntu18
     set_fact:
-      file_base: "ubuntu-{{ dist_release }}-server-cloudimg-amd64.img"
-    when: distrib == 'ubuntu18.04'
+      file_base: "ubuntu-{{ dist_release }}.04-server-cloudimg-amd64.img"
+    when: distrib == 'ubuntu18'
 
   - name: Set fact update_image to default value
     set_fact:
       update_image: False
 
-- hosts: ubuntu1404
+- hosts: ubuntu14
   gather_facts: no
   connection: local
   run_once: True
@@ -114,7 +138,7 @@
     include_role:
       name: setup
 
-- hosts: ubuntu1604
+- hosts: ubuntu16
   gather_facts: no
   connection: local
   run_once: True
@@ -127,7 +151,7 @@
     include_role:
       name: setup
 
-- hosts: ubuntu1804
+- hosts: ubuntu18
   gather_facts: no
   connection: local
   run_once: True
