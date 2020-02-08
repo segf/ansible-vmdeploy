@@ -24,12 +24,16 @@ chpasswd:
     root:root
     nadmin:nadmin
   expire: False
-{% endif %}
+{%- endif %}
 
 growpart:
   mode: auto
   devices: ['/']
   ignore_growroot_disabled: false
+
+{% if dist_release == '10' -%}
+unverified_modules: ['resolv_conf']
+{%- endif %}
 
 # underscore
 manage_resolv_conf: true
@@ -60,6 +64,6 @@ runcmd:
 {#  - 'systemctl mask cloud-final.service cloud-config.service cloud-init.service cloud-init-local.service' #}
 {%- endif -%}
 {# works on cloud-init >= v0.7.7 #}
-{%- if dist_release == '9' %}
+{%- if (dist_release == '9') or (dist_release == '10') %}
   - 'touch /etc/cloud/cloud-init.disabled'
 {% endif -%}

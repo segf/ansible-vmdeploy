@@ -203,6 +203,19 @@
     include_role:
       name: setup
 
+- hosts: debian10
+  gather_facts: no
+  connection: local
+  run_once: True
+  tags:
+    - setup
+
+  tasks:
+
+  - name: Include role setup
+    include_role:
+      name: setup
+
 - hosts: cirros
   gather_facts: no
   connection: local

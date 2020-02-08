@@ -87,12 +87,12 @@ Supported systems
 -----------------
 
 - ubuntu 14 16
-- debian 8 9 <sup>1</sup>
+- debian 8 9 10 <sup>1</sup>
 - Centos 7
 - cirros <sup>1</sup> :)
 
 <sup>1</sup> These distros are deployed as another os variant (see osinfo-query os)
-- debian 9 as debian 8
+- debian 9/10 as debian 8
 - cirros as ubuntu 12
 
 
