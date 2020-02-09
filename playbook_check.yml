@@ -24,7 +24,7 @@
   - name: Set dist_name and dist_release for debian family
     set_fact:
       dist_name: "{{ distrib[:6] }}"
-      dist_release: "{{ distrib[6] }}"
+      dist_release: "{{ distrib[6:] }}"
     when: "'debian' in distrib"
 
   - name: Adjust namesearch_list for centos

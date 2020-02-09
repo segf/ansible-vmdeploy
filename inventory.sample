@@ -23,6 +23,7 @@ hypervisor_user=kvmuser
 [debian]
 [debian8]
 [debian9]
+[debian10]
 
 [centos]
 [centos7]
@@ -35,6 +36,7 @@ ubuntu18
 [debian:children]
 debian8
 debian9
+debian10
 
 [centos:children]
 centos7

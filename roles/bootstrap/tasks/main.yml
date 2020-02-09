@@ -218,6 +218,13 @@
     - os_variant == ''
     - distrib == 'debian9'
 
+- name: Set unknown os-variant for debian10 to debian8
+  set_fact:
+    os_variant: 'debian8'
+  when:
+    - os_variant == ''
+    - distrib == 'debian10'
+
 - name: Set unknown os-variant for cirros to ubuntu12.04
   set_fact:
     os_variant: 'ubuntu12.04'

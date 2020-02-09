@@ -2,7 +2,7 @@
 #cloud-config
 #
 
-{%- if dist_release == '9' %}
+{%- if (dist_release == '9') or (dist_release == '10') %}
 version: 1
 config:
   - type: physical
