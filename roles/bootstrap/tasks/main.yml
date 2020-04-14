@@ -263,7 +263,7 @@
   loop_control:
     index_var: idx
   delegate_to: "{{ hypervisor }}"
-  when: disk_cnt is defined and disk_cnt > 1
+  when: disk_cnt is defined and disk_cnt|int > 1
 
 - name: Create additional disks if required
   remote_user: "{{ hypervisor_user }}"
@@ -274,7 +274,7 @@
   loop_control:
     index_var: idx
   delegate_to: "{{ hypervisor }}"
-  when: disk_cnt is defined and disk_cnt > 1
+  when: disk_cnt is defined and disk_cnt|int > 1
 
 - name: Build XML virtual machine
   shell: >
