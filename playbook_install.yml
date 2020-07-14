@@ -116,10 +116,10 @@
       key_server: "{{ image.key_server | d() }}"
       kernel_args: "{{ image.kernel_args }}"
 
-  - name: Adjust file_base fact for group ubuntu18
+  - name: Adjust file_base fact for group ubuntu18 & ubuntu20
     set_fact:
       file_base: "ubuntu-{{ dist_release }}.04-server-cloudimg-amd64.img"
-    when: distrib == 'ubuntu18'
+    when: distrib in ['ubuntu18', 'ubuntu20']
 
   - name: Set fact update_image to default value
     set_fact:
@@ -152,6 +152,19 @@
       name: setup
 
 - hosts: ubuntu18
+  gather_facts: no
+  connection: local
+  run_once: True
+  tags:
+    - setup
+
+  tasks:
+
+  - name: Include role setup
+    include_role:
+      name: setup
+
+- hosts: ubuntu20
   gather_facts: no
   connection: local
   run_once: True

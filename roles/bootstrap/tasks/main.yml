@@ -1,5 +1,7 @@
 ---
 
+# If libvirt is not importable
+# https://opendev.org/openstack/bifrost/commit/7417619eaa87ff6c5b75b9a1fc50bc83f7272300
 - name: Check existence of a previous instance
   virt:
     command: list_vms
@@ -232,12 +234,12 @@
     - os_variant == ''
     - distrib == 'cirros'
 
-- name: Set unknown os-variant for ubuntu18.04 to ubuntu16.04
+- name: Set unknown os-variant for ubuntu18/20.04 to ubuntu16.04
   set_fact:
     os_variant: 'ubuntu16.04'
   when:
     - os_variant == ''
-    - distrib == 'ubuntu18'
+    - distrib in ['ubuntu18', 'ubuntu20']
 
 - name: Copy Qcow, kernel and initrd files to remote host
   remote_user: "{{ hypervisor_user }}"

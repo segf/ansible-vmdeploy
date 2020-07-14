@@ -12,9 +12,13 @@
   set_fact:
     result_kernel: "{{ result }}"
 
+- name: Set fact path_kernel
+  set_fact:
+    path_kernel: "{{ '/boot/' if 'ubuntu20' in distrib else '/' }}"
+
 - name: Lookup kernel and initrd files from image for others
   shell: >
-    guestfish --ro -a "{{ disk_path + '/' + file_base }}" -i readlinklist / 'vmlinuz initrd.img' | sort | awk '{ print "/" $0 }'
+    guestfish --ro -a "{{ disk_path + '/' + file_base }}" -i readlinklist {{ path_kernel }} 'vmlinuz initrd.img' | sort | awk '{ print "{{ path_kernel }}" $0 }'
   register: result
   failed_when: result.stdout == ""
   changed_when: False
