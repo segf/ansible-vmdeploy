@@ -28,14 +28,17 @@ growpart:
   devices: ['/']
   ignore_growroot_disabled: false
 
-{% if not dist_release == '14' %}
+{% if dist_release in ['16', '18'] %}
 packages:
   - python-minimal
+{% elif dist_release == '20' %}
+packages:
+  - python3-minimal
 {% endif %}
 
 runcmd:
 # works on cloud-init >= v0.7.7
   - 'touch /etc/cloud/cloud-init.disabled'
-{% if dist_release == '18' %}
+{% if dist_release in ['18', '20'] %}
   - 'ln -sf /run/systemd/resolve/resolv.conf /etc/'
 {% endif %}
