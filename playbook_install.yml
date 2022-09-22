@@ -121,6 +121,11 @@
       file_base: "ubuntu-{{ dist_release }}.04-server-cloudimg-amd64.img"
     when: distrib in ['ubuntu18', 'ubuntu20']
 
+  - name: Adjust file_base fact for group ubuntu22
+    set_fact:
+      file_base: "ubuntu-{{ dist_release }}.04-server-cloudimg-amd64-disk-kvm.img"
+    when: distrib in ['ubuntu22']
+
   - name: Set fact update_image to default value
     set_fact:
       update_image: False
@@ -165,6 +170,19 @@
       name: setup
 
 - hosts: ubuntu20
+  gather_facts: no
+  connection: local
+  run_once: True
+  tags:
+    - setup
+
+  tasks:
+
+  - name: Include role setup
+    include_role:
+      name: setup
+
+- hosts: ubuntu22
   gather_facts: no
   connection: local
   run_once: True

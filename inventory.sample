@@ -21,6 +21,7 @@ hypervisor_user=kvmuser
 [ubuntu16]
 [ubuntu18]
 [ubuntu20]
+[ubuntu22]
 
 [debian]
 [debian8]
@@ -35,6 +36,7 @@ ubuntu14
 ubuntu16
 ubuntu18
 ubuntu20
+ubuntu22
 
 [debian:children]
 debian8
