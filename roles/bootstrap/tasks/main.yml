@@ -239,7 +239,7 @@
     os_variant: 'ubuntu16.04'
   when:
     - os_variant == ''
-    - distrib in ['ubuntu18', 'ubuntu20']
+    - distrib in ['ubuntu18', 'ubuntu20', 'ubuntu22']
 
 - name: Copy Qcow, kernel and initrd files to remote host
   remote_user: "{{ hypervisor_user }}"

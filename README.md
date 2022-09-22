@@ -86,7 +86,7 @@ Use your favorite package management tool to install these programs.
 Supported systems
 -----------------
 
-- ubuntu 14 16
+- ubuntu 14 16 17 20 22
 - debian 8 9 10 <sup>1</sup>
 - Centos 7
 - cirros <sup>1</sup> :)
