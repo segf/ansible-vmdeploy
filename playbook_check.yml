@@ -15,6 +15,12 @@
       dist_release: "{{ distrib[6:] }}"
     when: "'ubuntu' in distrib"
 
+# python3 produces an error
+  - name: Select python2 as interpreter for older distribution"
+    set_fact:
+      ansible_python_interpreter: /usr/bin/python
+    when: "distrib in ['ubuntu14', 'centos7']"
+
   - name: Set dist_name and dist_release for centos family
     set_fact:
       dist_name: "{{ distrib[:6] }}"
@@ -155,16 +161,21 @@
     changed_when: False
 
 # DNS
+# Use the real path instead of the link which might be wrong at boot
+  - name: Set fact resolvconf_path
+    set_fact:
+      resolvconf_path: "{{ '/run/systemd/resolve/resolv.conf' if (dist_name == 'ubuntu' and dist_release >= '18') else '/etc/resolv.conf' }}"
+
   - name: Checking nameserver list
     shell: >
-      echo "$(grep '^nameserver' /etc/resolv.conf | awk '{ print $2 }' | tr '\n' ' ' | sed 's/ $//' | sort)";
+      echo "$(grep '^nameserver' {{ resolvconf_path }} | awk '{ print $2 }' | tr '\n' ' ' | sed 's/ $//' | sort)";
     register: dns_list
     failed_when: dns_list.stdout != nameserver_list|sort|join(' ')
     changed_when: False
 
   - name: Checking namesearch list
     shell: >
-      echo "$(grep '^search' /etc/resolv.conf | cut -d' ' -f2- | sed 's/ $//g' | sort)";
+      echo "$(grep '^search' {{ resolvconf_path }} | cut -d' ' -f2- | sed 's/ $//g' | sort)";
     register: dns_search_list
     failed_when: dns_search_list.stdout !=  namesearch_list|sort|join(' ')
     changed_when: False
