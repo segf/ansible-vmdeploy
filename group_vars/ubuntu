@@ -7,7 +7,7 @@ image:
   checksum_file: 'SHA256SUMS'
   signature_file: 'SHA256SUMS.gpg'
 
-  gpg_key_id: 'D2EB 4462 6FDD C30B 513D 5BB7 1A5D 6C4C 7DB8 7C81'
+  gpg_key_id: '4A3C E3CD 565D 7EB5 C810  E2B9 7FF3 F408 476C F100'
   key_server: 'hkp://keyserver.ubuntu.com'
 
   kernel_args: 'root=/dev/vda1 net.ifnames=0 biosdevname=0 ipv6.disable=1 ds=nocloud'
