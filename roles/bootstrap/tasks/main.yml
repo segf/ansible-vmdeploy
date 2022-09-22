@@ -212,7 +212,7 @@
 - name: Set OS Variant
   set_fact:
     os_variant: "{{ result.stdout }}"
-  
+
 - name: Set unknown os-variant for debian9 to debian8
   set_fact:
     os_variant: 'debian8'
