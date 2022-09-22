@@ -40,7 +40,7 @@
   - name: Set os_vendor and os_version for centos family
     set_fact:
       os_vendor: "CentOS"
-      os_version: "{{ dist_release }}.0"
+      os_version: "{{ dist_release }}"
     when: "'centos' in distrib"
 
   - name: Set dist_name and dist_release for debian family
