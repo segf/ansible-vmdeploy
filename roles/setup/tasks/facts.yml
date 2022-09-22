@@ -14,7 +14,7 @@
 
 - name: Set fact path_kernel
   set_fact:
-    path_kernel: "{{ '/boot/' if 'ubuntu20' in distrib else '/' }}"
+    path_kernel: "{{ '/boot/' if distrib in ['ubuntu20', 'ubuntu22'] else '/' }}"
 
 - name: Lookup kernel and initrd files from image for others
   shell: >
