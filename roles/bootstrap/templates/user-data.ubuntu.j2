@@ -42,3 +42,4 @@ runcmd:
 {% if dist_release in ['18', '20'] %}
   - 'ln -sf /run/systemd/resolve/resolv.conf /etc/'
 {% endif %}
+  - 'sed -i "s/^\(#\|\)UseDNS \(.*\)/UseDNS no/" /etc/ssh/sshd_config'
