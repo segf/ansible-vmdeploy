@@ -43,6 +43,18 @@
       os_version: "{{ dist_release }}"
     when: "'centos' in distrib"
 
+  - name: Set dist_name and dist_release for rocky family
+    set_fact:
+      dist_name: "{{ distrib[:5] }}"
+      dist_release: "{{ distrib[5:] }}"
+    when: "'rocky' in distrib"
+
+  - name: Set os_vendor and os_version for rocky family
+    set_fact:
+      os_vendor: "CentOS"
+      os_version: "8"
+    when: "'rocky' in distrib"
+
   - name: Set dist_name and dist_release for debian family
     set_fact:
       dist_name: "{{ distrib[:6] }}"
@@ -196,6 +208,19 @@
       name: setup
 
 - hosts: centos7
+  gather_facts: no
+  connection: local
+  run_once: True
+  tags:
+    - setup
+
+  tasks:
+
+  - name: Include role setup
+    include_role:
+      name: setup
+
+- hosts: rocky8
   gather_facts: no
   connection: local
   run_once: True

@@ -89,6 +89,7 @@ Supported systems
 - ubuntu 14 16 17 20 22
 - debian 8 9 10 <sup>1</sup>
 - Centos 7
+- Rocky 8
 - cirros <sup>1</sup> :)
 
 <sup>1</sup> These distros are deployed as another os variant (see osinfo-query os)
