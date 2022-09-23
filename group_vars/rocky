@@ -1,0 +1,14 @@
+---
+
+image:
+  url_base: "https://download.rockylinux.org/pub/rocky/{{ dist_release }}/images"
+  file_base: "Rocky-{{ dist_release }}-GenericCloud.latest.x86_64.qcow2"
+
+  checksum_file: 'CHECKSUM'
+  signature_file: 'CHECKSUM.sig'
+
+  gpg_file: 'https://download.rockylinux.org/pub/rocky/RPM-GPG-KEY-rockyinfra'
+  gpg_key_id: '7051 C470 A929 F454 CEBE 37B7 15AF 5DAC 6D74 5A60'
+  key_server: 'hkps://keyserver.ubuntu.com'
+
+  kernel_args: 'root=/dev/vda1 net.ifnames=0 biosdevname=0 ipv6.disable=1 ds=nocloud'

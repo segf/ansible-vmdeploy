@@ -1,12 +1,12 @@
 ---
 
-- name: Lookup kernel and initrd files from image for centos
+- name: Lookup kernel and initrd files from image for centos & rocky
   shell: >
     guestfish --ro -a "{{ disk_path + '/' + file_base }}" -i cat /boot/grub/menu.lst | grep -E 'kernel|initrd' | awk '{ print $1" "$2 }' | sort | uniq | awk '{ print $2 }'
   register: result
   failed_when: result.stdout == ""
   changed_when: False
-  when: "'centos' in distrib"
+  when: "dist_name in ['centos', 'rocky']"
 
 - name: Set fact result_kernel
   set_fact:
@@ -22,7 +22,7 @@
   register: result
   failed_when: result.stdout == ""
   changed_when: False
-  when: "'centos' not in distrib"
+  when: "dist_name not in ['centos', 'rocky']"
 
 # Strange behaviour
 # https://github.com/ansible/ansible/issues/4297

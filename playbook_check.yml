@@ -21,11 +21,22 @@
       ansible_python_interpreter: /usr/bin/python
     when: "distrib in ['ubuntu14', 'centos7']"
 
+  - name: Select /usr/bin/python as interpreter for rocky8
+    set_fact:
+      ansible_python_interpreter: /usr/bin/python
+    when: "'rocky' in distrib"
+
   - name: Set dist_name and dist_release for centos family
     set_fact:
       dist_name: "{{ distrib[:6] }}"
       dist_release: "{{ distrib[6] }}"
     when: "'centos' in distrib"
+
+  - name: Set dist_name and dist_release for rocky family
+    set_fact:
+      dist_name: "{{ distrib[:5] }}"
+      dist_release: "{{ distrib[5] }}"
+    when: "'rocky' in distrib"
 
   - name: Set dist_name and dist_release for debian family
     set_fact:
@@ -36,7 +47,7 @@
   - name: Adjust namesearch_list for centos
     set_fact:
       namesearch_list: "{{ namesearch_list + [ namedomain ] }}"
-    when: "'centos' in distrib"
+    when: "dist_name in ['centos', 'rocky']"
 
   - name: Fail if distrib matches cirros
     fail:
