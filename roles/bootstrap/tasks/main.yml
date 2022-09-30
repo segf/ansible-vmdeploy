@@ -142,13 +142,6 @@
     virt-edit -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "/etc/cloud/cloud.cfg" -e 's/update_etc_hosts/update_etc_hosts\n - resolv_conf/'
   when: dist_name == 'debian'
 
-- name: Add NoCloud to datasource_list on debian 8
-  args:
-    executable: /bin/bash
-  shell: >
-    virt-edit -a "{{ disk_path + '/' + inventory_hostname + '.qcow2' }}" "/etc/cloud/cloud.cfg.d/90_dpkg.cfg" -e 's/\[/\[NoCloud, /'
-  when: (dist_name == 'debian') and (dist_release == '8')
-
 - name: Enable /etc/default/resizefs in the foreground for cirros
   args:
     executable: /bin/bash
@@ -213,33 +206,19 @@
   set_fact:
     os_variant: "{{ result.stdout }}"
 
-- name: Set unknown os-variant for debian9 to debian8
+- name: Set unknown os-variant for debian10 to debian9
   set_fact:
-    os_variant: 'debian8'
-  when:
-    - os_variant == ''
-    - distrib == 'debian9'
-
-- name: Set unknown os-variant for debian10 to debian8
-  set_fact:
-    os_variant: 'debian8'
+    os_variant: 'debian9'
   when:
     - os_variant == ''
     - distrib == 'debian10'
 
-- name: Set unknown os-variant for cirros to ubuntu12.04
+- name: Set unknown os-variant for ubuntu22.04 to ubuntu20.04
   set_fact:
-    os_variant: 'ubuntu12.04'
+    os_variant: 'ubuntu20.04'
   when:
     - os_variant == ''
-    - distrib == 'cirros'
-
-- name: Set unknown os-variant for ubuntu18/20.04 to ubuntu16.04
-  set_fact:
-    os_variant: 'ubuntu16.04'
-  when:
-    - os_variant == ''
-    - distrib in ['ubuntu18', 'ubuntu20', 'ubuntu22']
+    - distrib == 'ubuntu22'
 
 - name: Copy Qcow, kernel and initrd files to remote host
   remote_user: "{{ hypervisor_user }}"

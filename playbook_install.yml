@@ -233,19 +233,6 @@
     include_role:
       name: setup
 
-- hosts: debian8
-  gather_facts: no
-  connection: local
-  run_once: True
-  tags:
-    - setup
-
-  tasks:
-
-  - name: Include role setup
-    include_role:
-      name: setup
-
 - hosts: debian9
   gather_facts: no
   connection: local

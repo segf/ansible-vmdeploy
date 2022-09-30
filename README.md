@@ -44,10 +44,7 @@ The playbook attempts to fix bugs and provides missing features.
 Tested on
 ---------
 
-* ubuntu16.04 with PPA packages: ansible:2.9.4, python:2.7.12
-    use: add-apt-repository ppa:ansible/ansible-2.9
-* centos7.7 with own packages: ansible:2.9.4, python:2.7.5
-
+* ubuntu20.04 with ansible:2.9.6, python:3.8.2 (standard packages)
 Programs requirements
 ---------------------
 
@@ -60,7 +57,6 @@ virt-install
 xmlstarlet
 
 >**Notes**
-- On centos, you need to install the epel-release package first to get xmlstarlet.
 - If you want to use virt-manager as console, remember to install xauth.
 - On remote deployment, you have to provide an account which is member of the 'libvirt' group.
 
@@ -73,29 +69,21 @@ See also virt-install in the bootstrap role.
 Ansible deps
 ------------
 
-- libvirt-python
-- python-netaddr
-
-The virt module is buggy. The playbook fails randomly.
-See https://github.com/ansible/ansible/issues/27905
-I could use shell commands instead but I am lazy. Also, this module
-is currently under active rewrite.
-
-Use your favorite package management tool to install these programs.
+- python3-libvirt
+- python3-netaddr
 
 Supported systems
 -----------------
 
 - ubuntu 14 16 17 20 22
-- debian 8 9 10 <sup>1</sup>
+- debian 9 10 <sup>1</sup>
 - Centos 7
 - Rocky 8
 - cirros <sup>1</sup> :)
 
-<sup>1</sup> These distros are deployed as another os variant (see osinfo-query os)
-- debian 9/10 as debian 8
-- cirros as ubuntu 12
-
+<sup>1</sup> note :
+- debian 10 is deployed as debian 9 (see osinfo-query os)
+- cirros is deployed as 0.3.5
 
 Usage
 -----

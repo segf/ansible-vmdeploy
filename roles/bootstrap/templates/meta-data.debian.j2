@@ -1,20 +1,3 @@
 #jinja2:keep_trailing_newline: True, lstrip_blocks: True, trim_blocks: False
 local-hostname: {{ inventory_hostname }}
 manage_etc_hosts: false
-
-{%- if dist_release == '8' %}
-network-interfaces: |
-  auto eth0
-  iface eth0 inet static
-    address {{ ip | ipv4('address') }}
-    network {{ ip | ipv4('network') }}
-    netmask {{ ip | ipv4('netmask') }}
-    broadcast {{ ip | ipv4('broadcast') }}
-    gateway {{ gw | ipv4('address') }}
-    {%- if nameserver_list is defined %}
-    dns-nameservers {{ nameserver_list | join(' ') }}
-    {%- endif %}
-    {%- if namesearch_list is defined %}
-    dns-search {{ namesearch_list | join(' ') }}
-    {%- endif %}
-{% endif %}

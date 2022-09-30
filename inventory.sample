@@ -3,7 +3,7 @@
 #
 vm1     ansible_host=10.33.254.111 cpu=1 ram=512 disk=5 ip=10.33.254.111/24 gw=10.33.254.1 distrib=ubuntu16
 vm2     ansible_host=10.33.254.112 cpu=2 ram=768 disk=5 ip=10.33.254.112/24 gw=10.33.254.1 distrib=ubuntu16 nic=1 hypervisor=kvm01
-vm3     ansible_host=10.33.254.113 cpu=2 ram=512 disk=7 ip=10.33.254.113/24 gw=10.33.254.1 distrib=debian8 hypervisor=kvm02
+vm3     ansible_host=10.33.254.113 cpu=2 ram=512 disk=7 ip=10.33.254.113/24 gw=10.33.254.1 distrib=debian9 hypervisor=kvm02
 vm4     ansible_host=10.33.254.114 cpu=2 ram=512 disk=8 ip=10.33.254.114/24 gw=10.33.254.1 distrib=centos7 hypervisor=127.0.0.1
 vm5     ansible_host=10.33.254.115 cpu=1 ram=512 disk=5 ip=10.33.254.115/24 gw=10.33.254.1 distrib=cirros hypervisor=localhost
 vm6     ansible_host=10.33.254.116 cpu=2 ram=512 disk=8 ip=10.33.254.116/24 gw=10.33.254.1 distrib=debian9
@@ -24,7 +24,6 @@ hypervisor_user=kvmuser
 [ubuntu22]
 
 [debian]
-[debian8]
 [debian9]
 [debian10]
 
@@ -39,7 +38,6 @@ ubuntu20
 ubuntu22
 
 [debian:children]
-debian8
 debian9
 debian10
 
